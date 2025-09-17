@@ -11,6 +11,54 @@
       "description": "Placeholder for health news",
       "imageUrl": "https://picsum.photos/seed/news1/600/400",
       "imageHint": "health doctor"
+    },
+    {
+      "id": "doctor-avatar-d1",
+      "description": "Doctor Anjali Sharma",
+      "imageUrl": "https://picsum.photos/seed/doctor-d1/80/80",
+      "imageHint": "doctor woman"
+    },
+    {
+      "id": "doctor-avatar-d2",
+      "description": "Doctor Rajesh Gupta",
+      "imageUrl": "https://picsum.photos/seed/doctor-d2/80/80",
+      "imageHint": "doctor man"
+    },
+    {
+      "id": "doctor-avatar-d3",
+      "description": "Doctor Rohan Mehra",
+      "imageUrl": "https://picsum.photos/seed/doctor-d3/80/80",
+      "imageHint": "doctor man"
+    },
+    {
+      "id": "doctor-avatar-d4",
+      "description": "Doctor Priya Singh",
+      "imageUrl": "https://picsum.photos/seed/doctor-d4/80/80",
+      "imageHint": "doctor woman"
+    },
+    {
+      "id": "doctor-avatar-d5",
+      "description": "Doctor Sunita Patil",
+      "imageUrl": "https://picsum.photos/seed/doctor-d5/80/80",
+      "imageHint": "doctor woman"
+    },
+    {
+      "id": "doctor-avatar-d6",
+      "description": "Doctor Vikram Rathod",
+      "imageUrl": "https://picsum.photos/seed/doctor-d6/80/80",
+      "imageHint": "doctor man"
+    },
+    {
+      "id": "doctor-avatar-d7",
+      "description": "Doctor Sanjay Verma",
+      "imageUrl": "https://picsum.photos/seed/doctor-d7/80/80",
+      "imageHint": "doctor man"
+    },
+    {
+      "id": "doctor-avatar-d8",
+      "description": "Doctor Amit Desai",
+      "imageUrl": "https://picsum.photos/seed/doctor-d8/80/80",
+      "imageHint": "doctor man"
     }
   ]
 }

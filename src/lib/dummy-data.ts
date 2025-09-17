@@ -24,6 +24,25 @@ export type Pharmacy = {
   medicines: { [key: string]: 'In Stock' | 'Out of Stock' };
 };
 
+export type Doctor = {
+    id: string;
+    name: string;
+    specialty: string;
+    experience: number;
+    availability: 'Available Today' | 'Available Tomorrow';
+}
+
+export const doctors: Doctor[] = [
+    { id: 'd1', name: 'Anjali Sharma', specialty: 'General Physician', experience: 10, availability: 'Available Today'},
+    { id: 'd2', name: 'Rajesh Gupta', specialty: 'General Physician', experience: 15, availability: 'Available Tomorrow'},
+    { id: 'd3', name: 'Rohan Mehra', specialty: 'Pediatrics', experience: 8, availability: 'Available Today'},
+    { id: 'd4', name: 'Priya Singh', specialty: 'Gynecology', experience: 12, availability: 'Available Today'},
+    { id: 'd5', name: 'Sunita Patil', specialty: 'Gynecology', experience: 20, availability: 'Available Tomorrow'},
+    { id: 'd6', name: 'Vikram Rathod', specialty: 'Dermatology', experience: 7, availability: 'Available Today'},
+    { id: 'd7', name: 'Sanjay Verma', specialty: 'Orthopedics', experience: 18, availability: 'Available Tomorrow'},
+    { id: 'd8', name: 'Amit Desai', specialty: 'Cardiology', experience: 22, availability: 'Available Today'},
+]
+
 export const consultations: Consultation[] = [
   { id: 'c1', doctor: 'Dr. Anjali Sharma', specialty: 'General Physician', date: '2024-07-15' },
   { id: 'c2', doctor: 'Dr. Rohan Mehra', specialty: 'Pediatrics', date: '2024-06-20' },
