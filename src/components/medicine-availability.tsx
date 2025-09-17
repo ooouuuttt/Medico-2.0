@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Package } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -11,17 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 
 type View = 'search' | 'payment' | 'confirmation';
-type MedicineInfo = { status: 'In Stock' | 'Out of Stock'; quantity: number } | null;
-
+type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
 
 const MedicineAvailability = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('search');
-  const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
+  const [cartItem, setCartItem] = useState<CartItem | null>(null);
   const { toast } = useToast();
 
-  const handleOrder = (pharmacy: Pharmacy) => {
-    setSelectedPharmacy(pharmacy);
+  const handleOrder = (pharmacy: Pharmacy, medicineName: string, price: number) => {
+    setCartItem({ pharmacy, medicine: medicineName, quantity: 1, price });
     setView('payment');
   }
 
@@ -32,18 +31,15 @@ const MedicineAvailability = () => {
   const handleReset = () => {
     setView('search');
     setSearchTerm('');
-    setSelectedPharmacy(null);
+    setCartItem(null);
   }
 
-  const getMedicineInfo = (pharmacy: Pharmacy, medicine: string): MedicineInfo => {
-      if (!medicine) return null;
-      const lowerCaseMedicine = medicine.toLowerCase();
-      for (const medKey in pharmacy.medicines) {
-          if (medKey.toLowerCase().includes(lowerCaseMedicine)) {
-              return pharmacy.medicines[medKey];
-          }
-      }
-      return null;
+  const updateQuantity = (amount: number) => {
+    if (!cartItem) return;
+    const newQuantity = cartItem.quantity + amount;
+    if (newQuantity > 0 && newQuantity <= cartItem.pharmacy.medicines[cartItem.medicine].quantity) {
+      setCartItem({ ...cartItem, quantity: newQuantity });
+    }
   }
 
   const filteredPharmacies = searchTerm
@@ -54,15 +50,14 @@ const MedicineAvailability = () => {
       )
     : pharmacies;
 
-
   if (view === 'confirmation') {
     return (
       <div className="flex flex-col items-center justify-center text-center h-full space-y-4 p-4 animate-in fade-in duration-500">
         <CheckCircle2 className="h-16 w-16 text-green-500" />
         <h2 className="text-2xl font-bold font-headline">Order Placed!</h2>
         <p className="text-muted-foreground">
-          Your order for <strong>{searchTerm}</strong> from{' '}
-          <strong>{selectedPharmacy?.name}</strong> has been placed.
+          Your order for <strong>{cartItem?.quantity} x {cartItem?.medicine}</strong> from{' '}
+          <strong>{cartItem?.pharmacy?.name}</strong> has been placed.
         </p>
         <p className="text-sm text-muted-foreground">
           It will be delivered to your address soon.
@@ -79,7 +74,7 @@ const MedicineAvailability = () => {
     );
   }
 
-  if (view === 'payment') {
+  if (view === 'payment' && cartItem) {
     return (
       <div className="animate-in fade-in duration-500">
         <Button variant="ghost" size="sm" onClick={() => setView('search')} className="mb-4">
@@ -92,21 +87,26 @@ const MedicineAvailability = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-                <h3 className="font-bold text-lg">{selectedPharmacy?.name}</h3>
-                <p className="text-muted-foreground text-sm">{selectedPharmacy?.distance}</p>
+                <h3 className="font-bold text-lg">{cartItem.pharmacy.name}</h3>
+                <p className="text-muted-foreground text-sm">{cartItem.pharmacy.distance}</p>
             </div>
             <Separator />
             <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Medicine</span>
-                    <span className="font-semibold capitalize">{searchTerm}</span>
+                    <span className="font-semibold capitalize">{cartItem.medicine}</span>
+                </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Quantity</span>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(-1)}><Minus className="h-4 w-4" /></Button>
+                        <span className="font-semibold w-4 text-center">{cartItem.quantity}</span>
+                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(1)}><Plus className="h-4 w-4" /></Button>
+                    </div>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price</span>
-                    <span className="font-semibold">₹150</span>
-                </div>
-                 <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>(Price is for one strip/bottle)</span>
+                    <span className="text-muted-foreground">Total Price</span>
+                    <span className="font-semibold">₹{cartItem.price * cartItem.quantity}</span>
                 </div>
             </div>
             <Separator />
@@ -119,7 +119,7 @@ const MedicineAvailability = () => {
               </div>
             </div>
             <Button className="w-full" size="lg" onClick={handlePayment}>
-              Pay ₹150 & Order
+              Pay ₹{cartItem.price * cartItem.quantity} & Order
             </Button>
           </CardContent>
         </Card>
@@ -141,49 +141,43 @@ const MedicineAvailability = () => {
         />
       </div>
 
-      <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
-          filteredPharmacies.map((pharmacy) => {
-            const medicineInfo = searchTerm ? getMedicineInfo(pharmacy, searchTerm) : null;
-            const isInStock = medicineInfo?.status === 'In Stock';
-
-            if (searchTerm && !isInStock) {
-              return null;
-            }
-
-            return (
-              <div key={pharmacy.id} className="p-3 bg-secondary/50 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center">
-                <div className='mb-2 sm:mb-0'>
-                  <h3 className="font-semibold">{pharmacy.name}</h3>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5 mr-1" />
-                    <span>{pharmacy.distance}</span>
-                  </div>
-                </div>
-                <div className='flex items-center gap-2'>
-                  {searchTerm && medicineInfo && (
-                     <>
-                        <Badge variant={isInStock ? 'outline' : 'destructive'} className={isInStock ? 'text-green-600 border-green-600' : ''}>
-                          {medicineInfo.status}
-                        </Badge>
-                        {isInStock && (
-                          <>
-                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Package className="w-3.5 h-3.5" />
-                              <span>{medicineInfo.quantity} units</span>
+          filteredPharmacies.map((pharmacy) => (
+            <Card key={pharmacy.id} className="rounded-xl shadow-sm">
+                <CardHeader className="p-4">
+                    <h3 className="font-semibold">{pharmacy.name}</h3>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5 mr-1" />
+                        <span>{pharmacy.distance}</span>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-3">
+                    {Object.entries(pharmacy.medicines)
+                        .filter(([medName, medInfo]) => 
+                            medInfo.status === 'In Stock' &&
+                            (!searchTerm || medName.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map(([medicineName, medicineInfo]) => (
+                            <div key={medicineName} className="flex justify-between items-center">
+                                <div>
+                                    <p className="font-medium capitalize">{medicineName}</p>
+                                    <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
+                                </div>
+                                <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy, medicineName, medicineInfo.price)}>
+                                    <ShoppingCart className="h-4 w-4" />
+                                </Button>
                             </div>
-                            <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy)}>
-                              <ShoppingCart className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </>
-                  )}
-                 
-                </div>
-              </div>
-            );
-          })
+                    ))}
+                     {Object.values(pharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
+                        <p className="text-sm text-muted-foreground">No stock available.</p>
+                     )}
+                     {searchTerm && Object.entries(pharmacy.medicines).filter(([medName, medInfo]) => medInfo.status === 'In Stock' && medName.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                         <p className="text-sm text-muted-foreground">This medicine is not available here.</p>
+                     )}
+                </CardContent>
+            </Card>
+          ))
         ) : (
           <p className="text-center text-muted-foreground p-4">
             {searchTerm ? 'No pharmacies found with this medicine.' : 'No pharmacies found.'}

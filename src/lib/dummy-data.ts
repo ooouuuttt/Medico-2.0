@@ -21,7 +21,7 @@ export type Pharmacy = {
   id:string;
   name: string;
   distance: string;
-  medicines: { [key: string]: { status: 'In Stock' | 'Out of Stock', quantity: number } };
+  medicines: { [key: string]: { status: 'In Stock' | 'Out of Stock', quantity: number, price: number } };
 };
 
 export type Doctor = {
@@ -61,9 +61,9 @@ export const pharmacies: Pharmacy[] = [
     name: 'Apollo Pharmacy',
     distance: '1.2 km away',
     medicines: { 
-      'Paracetamol': { status: 'In Stock', quantity: 50 },
-      'Amoxicillin': { status: 'Out of Stock', quantity: 0 },
-      'Ibuprofen': { status: 'In Stock', quantity: 30 }
+      'Paracetamol': { status: 'In Stock', quantity: 50, price: 30 },
+      'Amoxicillin': { status: 'Out of Stock', quantity: 0, price: 80 },
+      'Ibuprofen': { status: 'In Stock', quantity: 30, price: 45 }
     },
   },
   {
@@ -71,9 +71,9 @@ export const pharmacies: Pharmacy[] = [
     name: 'Jan Aushadhi Kendra',
     distance: '2.5 km away',
     medicines: { 
-      'Paracetamol': { status: 'In Stock', quantity: 100 },
-      'Amoxicillin': { status: 'In Stock', quantity: 20 },
-      'Folic Acid': { status: 'Out of Stock', quantity: 0 }
+      'Paracetamol': { status: 'In Stock', quantity: 100, price: 25 },
+      'Amoxicillin': { status: 'In Stock', quantity: 20, price: 70 },
+      'Folic Acid': { status: 'Out of Stock', quantity: 0, price: 50 }
     },
   },
   {
@@ -81,8 +81,8 @@ export const pharmacies: Pharmacy[] = [
     name: 'Wellness Forever',
     distance: '3.1 km away',
     medicines: { 
-      'Ibuprofen': { status: 'In Stock', quantity: 45 },
-      'Cough Syrup': { status: 'In Stock', quantity: 25 }
+      'Ibuprofen': { status: 'In Stock', quantity: 45, price: 40 },
+      'Cough Syrup': { status: 'In Stock', quantity: 25, price: 120 }
     },
   },
    {
@@ -90,9 +90,9 @@ export const pharmacies: Pharmacy[] = [
     name: 'City Medicals',
     distance: '4.0 km away',
     medicines: { 
-      'Paracetamol': { status: 'Out of Stock', quantity: 0 },
-      'Amoxicillin': { status: 'In Stock', quantity: 15 },
-      'Folic Acid': { status: 'In Stock', quantity: 60 }
+      'Paracetamol': { status: 'Out of Stock', quantity: 0, price: 32 },
+      'Amoxicillin': { status: 'In Stock', quantity: 15, price: 75 },
+      'Folic Acid': { status: 'In Stock', quantity: 60, price: 45 }
     },
   },
 ];
