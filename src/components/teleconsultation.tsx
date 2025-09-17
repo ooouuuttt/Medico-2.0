@@ -9,8 +9,12 @@ import { specialties, doctors, Doctor } from '@/lib/dummy-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import VideoConsultation from './video-consultation';
+import AudioConsultation from './audio-consultation';
+import ChatConsultation from './chat-consultation';
 
-type ConsultationStep = 'specialty' | 'doctors' | 'payment' | 'confirmation';
+
+type ConsultationStep = 'specialty' | 'doctors' | 'payment' | 'confirmation' | 'consulting';
 type ConsultationType = 'video' | 'audio' | 'chat';
 
 const consultationPrices = {
@@ -49,8 +53,12 @@ const Teleconsultation = () => {
   };
 
   const handlePayment = () => {
-    setStep('confirmation');
+    setStep('consulting');
   };
+
+  const handleEndConsultation = () => {
+    setStep('confirmation');
+  }
 
   const handleReset = () => {
     setStep('specialty');
@@ -66,17 +74,32 @@ const Teleconsultation = () => {
   const doctorAvatar = (id: string) =>
     PlaceHolderImages.find((img) => img.id === `doctor-avatar-${id}`);
 
+  if (step === 'consulting' && selectedDoctor && consultationType) {
+    switch (consultationType) {
+      case 'video':
+        return <VideoConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+      case 'audio':
+        return <AudioConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+      case 'chat':
+        return <ChatConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+      default:
+        handleReset();
+        return null;
+    }
+  }
+
+
   if (step === 'confirmation') {
     return (
       <div className="flex flex-col items-center justify-center text-center h-full space-y-4 p-4 animate-in fade-in duration-500">
         <LucideIcons.CheckCircle2 className="h-16 w-16 text-green-500" />
-        <h2 className="text-2xl font-bold font-headline">Request Confirmed!</h2>
+        <h2 className="text-2xl font-bold font-headline">Consultation Ended</h2>
         <p className="text-muted-foreground">
           Your {consultationType} consultation with{' '}
-          <strong>Dr. {selectedDoctor?.name}</strong> is confirmed.
+          <strong>Dr. {selectedDoctor?.name}</strong> has ended.
         </p>
         <p className="text-sm text-muted-foreground">
-          You will be notified when the doctor is ready.
+          We hope you found it helpful.
         </p>
         <Button
           onClick={handleReset}
