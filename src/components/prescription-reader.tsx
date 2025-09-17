@@ -65,10 +65,10 @@ const PrescriptionReader = () => {
     };
 
     const findPharmaciesForMedicine = (medicineName: string) => {
-        const medicineNameLower = medicineName.toLowerCase();
+        const medicineNameLower = medicineName.toLowerCase().trim();
         return pharmacies.filter(pharmacy => 
             Object.keys(pharmacy.medicines).some(med => 
-                med.toLowerCase().includes(medicineNameLower) && pharmacy.medicines[med].status === 'In Stock'
+                med.toLowerCase().trim().includes(medicineNameLower) && pharmacy.medicines[med].status === 'In Stock'
             )
         );
     };
