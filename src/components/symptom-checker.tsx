@@ -60,7 +60,7 @@ const SymptomChecker = () => {
       const res = await aiSymptomChecker(values);
       setResult(res);
     } catch (e) {
-      setError('An error occurred. Please try again.');
+      setError('The AI service is currently busy. Please try again in a few moments.');
       console.error(e);
     } finally {
       setIsLoading(false);
@@ -129,8 +129,8 @@ const SymptomChecker = () => {
 
       {error && (
         <Card className="bg-destructive/10 border-destructive rounded-xl">
-          <CardContent className="p-4 text-center text-destructive font-medium">
-            {error}
+          <CardContent className="p-4 text-center text-destructive font-medium flex items-center justify-center gap-2">
+            <AlertTriangle className='h-5 w-5' /> {error}
           </CardContent>
         </Card>
       )}

@@ -49,7 +49,7 @@ const PrescriptionReader = () => {
             setResult(res);
         } catch (e) {
             console.error(e);
-            setError('Failed to analyze prescription. The service might be busy. Please try again.');
+            setError('The AI service is currently busy. Please try again in a few moments.');
         } finally {
             setIsLoading(false);
         }
