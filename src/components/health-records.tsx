@@ -33,6 +33,7 @@ import { Button } from './ui/button';
 import { useDropzone } from 'react-dropzone';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from './ui/chart';
+import { Badge } from './ui/badge';
 
 const HealthRecords = () => {
   const [myFiles, setMyFiles] = useState<File[]>([]);
