@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-avatar",
+      "description": "User profile avatar",
+      "imageUrl": "https://picsum.photos/seed/user-avatar/40/40",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "news-1",
+      "description": "Placeholder for health news",
+      "imageUrl": "https://picsum.photos/seed/news1/600/400",
+      "imageHint": "health doctor"
+    }
+  ]
 }

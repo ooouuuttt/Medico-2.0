@@ -1,3 +1,9 @@
+import AppShell from '@/components/app-shell';
+
 export default function Home() {
-  return <></>;
+  return (
+    <div className="bg-background">
+      <AppShell />
+    </div>
+  );
 }
