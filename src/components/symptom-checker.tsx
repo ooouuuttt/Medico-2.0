@@ -4,7 +4,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Bot, AlertTriangle, ListChecks, Activity, Sparkles } from 'lucide-react';
+import {
+  Bot,
+  AlertTriangle,
+  ListChecks,
+  Activity,
+  Sparkles,
+  Stethoscope,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,7 +33,10 @@ import {
 const formSchema = z.object({
   symptoms: z
     .string()
-    .min(10, 'Please describe your symptoms in more detail for a better analysis.')
+    .min(
+      10,
+      'Please describe your symptoms in more detail for a better analysis.'
+    )
     .max(500, 'Please limit your description to 500 characters.'),
 });
 
@@ -136,7 +146,10 @@ const SymptomChecker = () => {
                 <AlertTriangle className="h-5 w-5 text-primary" />
                 Urgency Level
               </h4>
-              <Badge variant={getUrgencyBadge(result.urgencyLevel)} className="capitalize text-base px-3 py-1">
+              <Badge
+                variant={getUrgencyBadge(result.urgencyLevel)}
+                className="capitalize text-base px-3 py-1"
+              >
                 {result.urgencyLevel}
               </Badge>
             </div>
@@ -152,14 +165,15 @@ const SymptomChecker = () => {
               </ul>
             </div>
             <div className="space-y-2">
-               <h4 className="font-semibold flex items-center gap-2">
+              <h4 className="font-semibold flex items-center gap-2">
                 <Stethoscope className="h-5 w-5 text-primary" />
                 Recommendation
               </h4>
               <p className="text-muted-foreground">{result.recommendation}</p>
             </div>
-             <p className="text-xs text-muted-foreground/80 pt-4 border-t">
-              Disclaimer: This is an AI-generated analysis and not a substitute for professional medical advice.
+            <p className="text-xs text-muted-foreground/80 pt-4 border-t">
+              Disclaimer: This is an AI-generated analysis and not a substitute
+              for professional medical advice.
             </p>
           </CardContent>
         </Card>
