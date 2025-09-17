@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 
 type View = 'search' | 'payment' | 'confirmation';
+type MedicineInfo = { status: 'In Stock' | 'Out of Stock'; quantity: number } | null;
 
 
 const MedicineAvailability = () => {
@@ -34,22 +35,25 @@ const MedicineAvailability = () => {
     setSelectedPharmacy(null);
   }
 
-  const filteredPharmacies = searchTerm ? pharmacies.filter((pharmacy) =>
-    Object.keys(pharmacy.medicines).some(
-      (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  ) : [];
-
-  const getStockStatus = (pharmacy: Pharmacy, medicine: string): 'In Stock' | 'Out of Stock' | 'Not Sold' => {
-      if (!medicine) return 'Not Sold';
+  const getMedicineInfo = (pharmacy: Pharmacy, medicine: string): MedicineInfo => {
+      if (!medicine) return null;
       const lowerCaseMedicine = medicine.toLowerCase();
       for (const medKey in pharmacy.medicines) {
           if (medKey.toLowerCase().includes(lowerCaseMedicine)) {
               return pharmacy.medicines[medKey];
           }
       }
-      return 'Not Sold';
+      return null;
   }
+
+  const filteredPharmacies = searchTerm
+    ? pharmacies.filter((pharmacy) =>
+        Object.keys(pharmacy.medicines).some(
+          (med) => med.toLowerCase().includes(searchTerm.toLowerCase()) && pharmacy.medicines[med].status === 'In Stock'
+        )
+      )
+    : pharmacies;
+
 
   if (view === 'confirmation') {
     return (
@@ -137,42 +141,55 @@ const MedicineAvailability = () => {
         />
       </div>
 
-      {searchTerm && (
-        <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-          {filteredPharmacies.length > 0 ? (
-            filteredPharmacies.map((pharmacy) => {
-              const status = getStockStatus(pharmacy, searchTerm);
-              if (status === 'Not Sold') return null;
-              
-              const isInStock = status === 'In Stock';
+      <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+        {filteredPharmacies.length > 0 ? (
+          filteredPharmacies.map((pharmacy) => {
+            const medicineInfo = searchTerm ? getMedicineInfo(pharmacy, searchTerm) : null;
+            const isInStock = medicineInfo?.status === 'In Stock';
 
-              return (
-                <div key={pharmacy.id} className="p-3 bg-secondary/50 rounded-lg flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{pharmacy.name}</h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPin className="w-3.5 h-3.5 mr-1" />
-                      <span>{pharmacy.distance}</span>
-                    </div>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <Badge variant={isInStock ? 'outline' : 'destructive'} className={isInStock ? 'text-green-600 border-green-600' : ''}>
-                      {status}
-                    </Badge>
-                    {isInStock && (
-                      <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy)}>
-                        <ShoppingCart className="h-4 w-4" />
-                      </Button>
-                    )}
+            if (searchTerm && !isInStock) {
+              return null;
+            }
+
+            return (
+              <div key={pharmacy.id} className="p-3 bg-secondary/50 rounded-lg flex flex-col sm:flex-row justify-between sm:items-center">
+                <div className='mb-2 sm:mb-0'>
+                  <h3 className="font-semibold">{pharmacy.name}</h3>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 mr-1" />
+                    <span>{pharmacy.distance}</span>
                   </div>
                 </div>
-              );
-            })
-          ) : (
-            <p className="text-center text-muted-foreground p-4">No pharmacies found with this medicine.</p>
-          )}
-        </div>
-      )}
+                <div className='flex items-center gap-2'>
+                  {searchTerm && medicineInfo && (
+                     <>
+                        <Badge variant={isInStock ? 'outline' : 'destructive'} className={isInStock ? 'text-green-600 border-green-600' : ''}>
+                          {medicineInfo.status}
+                        </Badge>
+                        {isInStock && (
+                          <>
+                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Package className="w-3.5 h-3.5" />
+                              <span>{medicineInfo.quantity} units</span>
+                            </div>
+                            <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy)}>
+                              <ShoppingCart className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </>
+                  )}
+                 
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-center text-muted-foreground p-4">
+            {searchTerm ? 'No pharmacies found with this medicine.' : 'No pharmacies found.'}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

@@ -21,7 +21,7 @@ export type Pharmacy = {
   id:string;
   name: string;
   distance: string;
-  medicines: { [key: string]: 'In Stock' | 'Out of Stock' };
+  medicines: { [key: string]: { status: 'In Stock' | 'Out of Stock', quantity: number } };
 };
 
 export type Doctor = {
@@ -60,25 +60,40 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph1',
     name: 'Apollo Pharmacy',
     distance: '1.2 km away',
-    medicines: { 'Paracetamol': 'In Stock', 'Amoxicillin': 'Out of Stock', 'Ibuprofen': 'In Stock' },
+    medicines: { 
+      'Paracetamol': { status: 'In Stock', quantity: 50 },
+      'Amoxicillin': { status: 'Out of Stock', quantity: 0 },
+      'Ibuprofen': { status: 'In Stock', quantity: 30 }
+    },
   },
   {
     id: 'ph2',
     name: 'Jan Aushadhi Kendra',
     distance: '2.5 km away',
-    medicines: { 'Paracetamol': 'In Stock', 'Amoxicillin': 'In Stock', 'Folic Acid': 'Out of Stock' },
+    medicines: { 
+      'Paracetamol': { status: 'In Stock', quantity: 100 },
+      'Amoxicillin': { status: 'In Stock', quantity: 20 },
+      'Folic Acid': { status: 'Out of Stock', quantity: 0 }
+    },
   },
   {
     id: 'ph3',
     name: 'Wellness Forever',
     distance: '3.1 km away',
-    medicines: { 'Ibuprofen': 'In Stock', 'Cough Syrup': 'In Stock' },
+    medicines: { 
+      'Ibuprofen': { status: 'In Stock', quantity: 45 },
+      'Cough Syrup': { status: 'In Stock', quantity: 25 }
+    },
   },
    {
     id: 'ph4',
     name: 'City Medicals',
     distance: '4.0 km away',
-    medicines: { 'Paracetamol': 'Out of Stock', 'Amoxicillin': 'In Stock', 'Folic Acid': 'In Stock' },
+    medicines: { 
+      'Paracetamol': { status: 'Out of Stock', quantity: 0 },
+      'Amoxicillin': { status: 'In Stock', quantity: 15 },
+      'Folic Acid': { status: 'In Stock', quantity: 60 }
+    },
   },
 ];
 
