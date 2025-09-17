@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User, Bot } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User, Bot, Pill } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -12,8 +12,9 @@ import HealthRecords from '@/components/health-records';
 import Profile from '@/components/profile';
 import { Logo } from '@/components/icons';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Medical from './medical';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical';
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
@@ -30,6 +31,8 @@ export default function AppShell() {
         return <Teleconsultation />;
       case 'records':
         return <HealthRecords />;
+      case 'medical':
+        return <Medical />;
       case 'profile':
         return <Profile />;
       default:
@@ -41,6 +44,7 @@ export default function AppShell() {
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'symptoms', icon: Bot, label: 'Symptoms' },
     { id: 'consult', icon: Stethoscope, label: 'Consult' },
+    { id: 'medical', icon: Pill, label: 'Medical' },
     { id: 'records', icon: ClipboardList, label: 'Records' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];

@@ -18,14 +18,6 @@ import { Button } from '@/components/ui/button';
 import { reminders } from '@/lib/dummy-data';
 import { getHealthNewsSummary } from '@/ai/flows/health-news-summaries';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import MedicineAvailability from '@/components/medicine-availability';
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
@@ -82,26 +74,17 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         ))}
       </div>
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
-          >
-            <Pill className="h-8 w-8 text-primary" />
-            <div>
-              <p className="font-bold text-base">Medicine Availability</p>
-              <p className="text-sm text-muted-foreground">Check nearby pharmacy stock</p>
-            </div>
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-md w-[95%] rounded-lg">
-          <DialogHeader>
-            <DialogTitle>Medicine Availability</DialogTitle>
-          </DialogHeader>
-          <MedicineAvailability />
-        </DialogContent>
-      </Dialog>
+      <Button
+        variant="outline"
+        className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
+        onClick={() => setActiveTab('medical')}
+      >
+        <Pill className="h-8 w-8 text-primary" />
+        <div>
+          <p className="font-bold text-base">Nearby Medical</p>
+          <p className="text-sm text-muted-foreground">Order medicines online</p>
+        </div>
+      </Button>
 
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">
