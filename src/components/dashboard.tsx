@@ -41,7 +41,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         setNewsSummary(summary);
       } catch (error) {
         console.error('Failed to fetch health news:', error);
-        setNewsSummary('Could not load health news at the moment. Please try again later.');
+        setNewsSummary('The health news service is currently busy. Please try again in a few moments.');
       } finally {
         setIsLoadingNews(false);
       }
