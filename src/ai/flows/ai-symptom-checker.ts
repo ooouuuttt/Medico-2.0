@@ -46,7 +46,7 @@ const prompt = ai.definePrompt({
 Symptoms: {{{symptoms}}}
 
 Respond in JSON format with the following keys:
-- possibleConditions: An array of possible medical conditions based on the symptoms.
+- possibleConditions: An array of possible medical conditions based on the symptoms. If no specific conditions can be determined, return an empty array.
 - urgencyLevel: The urgency level of the condition (mild, moderate, or critical).
 - recommendation: Recommendation on whether to self-care, visit a pharmacy, or consult a doctor immediately.
 
