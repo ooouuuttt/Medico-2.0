@@ -21,6 +21,7 @@ export type Pharmacy = {
   id:string;
   name: string;
   distance: string;
+  address: string;
   medicines: { [key: string]: { status: 'In Stock' | 'Out of Stock', quantity: number, price: number } };
 };
 
@@ -60,6 +61,7 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph1',
     name: 'Apollo Pharmacy',
     distance: '1.2 km away',
+    address: 'Main Road, Rampur',
     medicines: { 
       'Paracetamol': { status: 'In Stock', quantity: 50, price: 30 },
       'Amoxicillin': { status: 'Out of Stock', quantity: 0, price: 80 },
@@ -70,6 +72,7 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph2',
     name: 'Jan Aushadhi Kendra',
     distance: '2.5 km away',
+    address: 'Bus Stand Road, Govindpur',
     medicines: { 
       'Paracetamol': { status: 'In Stock', quantity: 100, price: 25 },
       'Amoxicillin': { status: 'In Stock', quantity: 20, price: 70 },
@@ -80,6 +83,7 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph3',
     name: 'Wellness Forever',
     distance: '3.1 km away',
+    address: 'Market Square, Sitapur',
     medicines: { 
       'Ibuprofen': { status: 'In Stock', quantity: 45, price: 40 },
       'Cough Syrup': { status: 'In Stock', quantity: 25, price: 120 }
@@ -89,6 +93,7 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph4',
     name: 'City Medicals',
     distance: '4.0 km away',
+    address: 'Hospital Road, Alipur',
     medicines: { 
       'Paracetamol': { status: 'Out of Stock', quantity: 0, price: 32 },
       'Amoxicillin': { status: 'In Stock', quantity: 15, price: 75 },

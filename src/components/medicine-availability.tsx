@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, ChevronDown } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -9,18 +9,22 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
-type View = 'search' | 'payment' | 'confirmation';
+type View = 'list' | 'pharmacy' | 'payment' | 'confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
 
 const MedicineAvailability = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [view, setView] = useState<View>('search');
+  const [view, setView] = useState<View>('list');
+  const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
-  const [openPharmacy, setOpenPharmacy] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleSelectPharmacy = (pharmacy: Pharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    setView('pharmacy');
+  };
 
   const handleOrder = (pharmacy: Pharmacy, medicineName: string, price: number) => {
     setCartItem({ pharmacy, medicine: medicineName, quantity: 1, price });
@@ -32,9 +36,10 @@ const MedicineAvailability = () => {
   };
 
   const handleReset = () => {
-    setView('search');
+    setView('list');
     setSearchTerm('');
     setCartItem(null);
+    setSelectedPharmacy(null);
   }
 
   const updateQuantity = (amount: number) => {
@@ -80,9 +85,9 @@ const MedicineAvailability = () => {
   if (view === 'payment' && cartItem) {
     return (
       <div className="animate-in fade-in duration-500">
-        <Button variant="ghost" size="sm" onClick={() => setView('search')} className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => setView('pharmacy')} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to search
+          Back to pharmacy
         </Button>
         <Card className="rounded-xl shadow-lg">
           <CardHeader>
@@ -130,6 +135,46 @@ const MedicineAvailability = () => {
     )
   }
 
+  if (view === 'pharmacy' && selectedPharmacy) {
+    return (
+        <div className="animate-in fade-in duration-500">
+             <Button variant="ghost" size="sm" onClick={() => { setView('list'); setSelectedPharmacy(null); }} className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to list
+            </Button>
+            <Card className="rounded-xl shadow-sm">
+                <CardHeader>
+                    <CardTitle>{selectedPharmacy.name}</CardTitle>
+                    <div className="flex items-center text-sm text-muted-foreground pt-1">
+                        <Building className="w-4 h-4 mr-2" />
+                        <span>{selectedPharmacy.address}</span>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <h4 className='font-semibold'>Available Medicines</h4>
+                    {Object.entries(selectedPharmacy.medicines)
+                        .filter(([, medInfo]) => medInfo.status === 'In Stock')
+                        .map(([medicineName, medicineInfo]) => (
+                            <div key={medicineName} className="flex justify-between items-center border-t pt-3">
+                                <div>
+                                    <p className="font-medium capitalize">{medicineName}</p>
+                                    <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
+                                </div>
+                                <Button size="sm" onClick={() => handleOrder(selectedPharmacy, medicineName, medicineInfo.price)}>
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    Order
+                                </Button>
+                            </div>
+                    ))}
+                    {Object.values(selectedPharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center pt-4">No medicines currently available.</p>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
+
 
   return (
     <div className="space-y-4">
@@ -147,51 +192,25 @@ const MedicineAvailability = () => {
       <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
           filteredPharmacies.map((pharmacy) => (
-            <Collapsible key={pharmacy.id} open={openPharmacy === pharmacy.id} onOpenChange={() => setOpenPharmacy(openPharmacy === pharmacy.id ? null : pharmacy.id)}>
-              <Card className="rounded-xl shadow-sm">
-                  <CardHeader className="p-4 flex flex-row items-center justify-between">
-                      <div>
-                          <h3 className="font-semibold">{pharmacy.name}</h3>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                              <MapPin className="w-3.5 h-3.5 mr-1" />
-                              <span>{pharmacy.distance}</span>
-                          </div>
-                      </div>
-                      <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <ChevronDown className={cn("h-5 w-5 transition-transform", openPharmacy === pharmacy.id && "rotate-180")} />
-                            <span className="sr-only">View medicines</span>
-                          </Button>
-                      </CollapsibleTrigger>
-                  </CardHeader>
-                  <CollapsibleContent>
-                    <CardContent className="p-4 pt-0 space-y-3">
-                        {Object.entries(pharmacy.medicines)
-                            .filter(([medName, medInfo]) => 
-                                medInfo.status === 'In Stock' &&
-                                (!searchTerm || medName.toLowerCase().includes(searchTerm.toLowerCase()))
-                            )
-                            .map(([medicineName, medicineInfo]) => (
-                                <div key={medicineName} className="flex justify-between items-center">
-                                    <div>
-                                        <p className="font-medium capitalize">{medicineName}</p>
-                                        <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
-                                    </div>
-                                    <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy, medicineName, medicineInfo.price)}>
-                                        <ShoppingCart className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                        ))}
-                        {Object.values(pharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
-                            <p className="text-sm text-muted-foreground">No stock available.</p>
-                        )}
-                        {searchTerm && Object.entries(pharmacy.medicines).filter(([medName, medInfo]) => medInfo.status === 'In Stock' && medName.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                            <p className="text-sm text-muted-foreground">This medicine is not available here.</p>
-                        )}
-                    </CardContent>
-                  </CollapsibleContent>
-              </Card>
-            </Collapsible>
+            <Card key={pharmacy.id} className="rounded-xl shadow-sm">
+                <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="font-semibold">{pharmacy.name}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5 mr-1" />
+                            <span>{pharmacy.distance}</span>
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground mt-1">
+                            <Building className="w-3 h-3 mr-1.5" />
+                            <span>{pharmacy.address}</span>
+                        </div>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={() => handleSelectPharmacy(pharmacy)}>
+                        <ShoppingCart className="h-5 w-5" />
+                        <span className="sr-only">Shop at {pharmacy.name}</span>
+                    </Button>
+                </CardContent>
+            </Card>
           ))
         ) : (
           <p className="text-center text-muted-foreground p-4">
