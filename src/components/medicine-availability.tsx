@@ -34,13 +34,14 @@ const MedicineAvailability = () => {
     setSelectedPharmacy(null);
   }
 
-  const filteredPharmacies = pharmacies.filter((pharmacy) =>
+  const filteredPharmacies = searchTerm ? pharmacies.filter((pharmacy) =>
     Object.keys(pharmacy.medicines).some(
       (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  );
+  ) : [];
 
   const getStockStatus = (pharmacy: Pharmacy, medicine: string): 'In Stock' | 'Out of Stock' | 'Not Sold' => {
+      if (!medicine) return 'Not Sold';
       const lowerCaseMedicine = medicine.toLowerCase();
       for (const medKey in pharmacy.medicines) {
           if (medKey.toLowerCase().includes(lowerCaseMedicine)) {
@@ -155,7 +156,7 @@ const MedicineAvailability = () => {
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <Badge variant={isInStock ? 'default' : 'destructive'}>
+                    <Badge variant={isInStock ? 'outline' : 'destructive'} className={isInStock ? 'text-green-600 border-green-600' : ''}>
                       {status}
                     </Badge>
                     {isInStock && (

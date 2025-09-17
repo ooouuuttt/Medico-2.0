@@ -72,7 +72,13 @@ export const pharmacies: Pharmacy[] = [
     id: 'ph3',
     name: 'Wellness Forever',
     distance: '3.1 km away',
-    medicines: { 'Paracetamol': 'Out of Stock', 'Amoxicillin': 'In Stock', 'Ibuprofen': 'In Stock' },
+    medicines: { 'Ibuprofen': 'In Stock', 'Cough Syrup': 'In Stock' },
+  },
+   {
+    id: 'ph4',
+    name: 'City Medicals',
+    distance: '4.0 km away',
+    medicines: { 'Paracetamol': 'Out of Stock', 'Amoxicillin': 'In Stock', 'Folic Acid': 'In Stock' },
   },
 ];
 
