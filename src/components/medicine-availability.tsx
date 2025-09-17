@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -10,6 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
@@ -18,16 +24,23 @@ const MedicineAvailability = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
+  const [selectedMedicine, setSelectedMedicine] = useState<{name: string, price: number, quantity: number} | null>(null);
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
   const { toast } = useToast();
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
+    setSelectedMedicine(null);
     setView('pharmacy');
   };
 
-  const handleOrder = (pharmacy: Pharmacy, medicineName: string, price: number) => {
-    setCartItem({ pharmacy, medicine: medicineName, quantity: 1, price });
+  const handleSelectMedicine = (name: string, price: number, quantity: number) => {
+    setSelectedMedicine({name, price, quantity});
+  }
+
+  const handleOrder = () => {
+    if (!selectedPharmacy || !selectedMedicine) return;
+    setCartItem({ pharmacy: selectedPharmacy, medicine: selectedMedicine.name, quantity: 1, price: selectedMedicine.price });
     setView('payment');
   }
 
@@ -40,12 +53,13 @@ const MedicineAvailability = () => {
     setSearchTerm('');
     setCartItem(null);
     setSelectedPharmacy(null);
+    setSelectedMedicine(null);
   }
 
   const updateQuantity = (amount: number) => {
-    if (!cartItem) return;
+    if (!cartItem || !selectedMedicine) return;
     const newQuantity = cartItem.quantity + amount;
-    if (newQuantity > 0 && newQuantity <= cartItem.pharmacy.medicines[cartItem.medicine].quantity) {
+    if (newQuantity > 0 && newQuantity <= selectedMedicine.quantity) {
       setCartItem({ ...cartItem, quantity: newQuantity });
     }
   }
@@ -57,6 +71,10 @@ const MedicineAvailability = () => {
         )
       )
     : pharmacies;
+  
+  const availableMedicines = selectedPharmacy 
+    ? Object.entries(selectedPharmacy.medicines).filter(([, medInfo]) => medInfo.status === 'In Stock')
+    : [];
 
   if (view === 'confirmation') {
     return (
@@ -150,23 +168,42 @@ const MedicineAvailability = () => {
                         <span>{selectedPharmacy.address}</span>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                     <h4 className='font-semibold'>Available Medicines</h4>
-                    {Object.entries(selectedPharmacy.medicines)
-                        .filter(([, medInfo]) => medInfo.status === 'In Stock')
-                        .map(([medicineName, medicineInfo]) => (
-                            <div key={medicineName} className="flex justify-between items-center border-t pt-3">
-                                <div>
-                                    <p className="font-medium capitalize">{medicineName}</p>
-                                    <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
-                                </div>
-                                <Button size="sm" onClick={() => handleOrder(selectedPharmacy, medicineName, medicineInfo.price)}>
-                                    <ShoppingCart className="h-4 w-4 mr-2" />
-                                    Order
-                                </Button>
-                            </div>
-                    ))}
-                    {Object.values(selectedPharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
+                    {availableMedicines.length > 0 ? (
+                      <div className="space-y-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between">
+                              <span>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
+                              <ChevronDown className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                            {availableMedicines.map(([medicineName, medicineInfo]) => (
+                                <DropdownMenuItem key={medicineName} onClick={() => handleSelectMedicine(medicineName, medicineInfo.price, medicineInfo.quantity)}>
+                                    {medicineName}
+                                </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        {selectedMedicine && (
+                          <div className="border-t pt-4 space-y-4">
+                              <div className="flex justify-between items-center">
+                                  <div>
+                                      <p className="font-medium capitalize">{selectedMedicine.name}</p>
+                                      <p className="text-sm text-muted-foreground">₹{selectedMedicine.price} | Qty: {selectedMedicine.quantity}</p>
+                                  </div>
+                                  <Button size="sm" onClick={handleOrder}>
+                                      <ShoppingCart className="h-4 w-4 mr-2" />
+                                      Order
+                                  </Button>
+                              </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                         <p className="text-sm text-muted-foreground text-center pt-4">No medicines currently available.</p>
                     )}
                 </CardContent>
