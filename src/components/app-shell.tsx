@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User, Bot, Pill, ScanText } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -45,9 +45,7 @@ export default function AppShell() {
 
   const navItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'symptoms', icon: Bot, label: 'Symptoms' },
     { id: 'consult', icon: Stethoscope, label: 'Consult' },
-    { id: 'prescription', icon: ScanText, label: 'Scan' },
     { id: 'records', icon: ClipboardList, label: 'Records' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
