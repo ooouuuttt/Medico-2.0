@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -9,6 +9,8 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 type View = 'search' | 'payment' | 'confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
@@ -17,6 +19,7 @@ const MedicineAvailability = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('search');
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
+  const [openPharmacy, setOpenPharmacy] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleOrder = (pharmacy: Pharmacy, medicineName: string, price: number) => {
@@ -144,39 +147,51 @@ const MedicineAvailability = () => {
       <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
           filteredPharmacies.map((pharmacy) => (
-            <Card key={pharmacy.id} className="rounded-xl shadow-sm">
-                <CardHeader className="p-4">
-                    <h3 className="font-semibold">{pharmacy.name}</h3>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5 mr-1" />
-                        <span>{pharmacy.distance}</span>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-3">
-                    {Object.entries(pharmacy.medicines)
-                        .filter(([medName, medInfo]) => 
-                            medInfo.status === 'In Stock' &&
-                            (!searchTerm || medName.toLowerCase().includes(searchTerm.toLowerCase()))
-                        )
-                        .map(([medicineName, medicineInfo]) => (
-                            <div key={medicineName} className="flex justify-between items-center">
-                                <div>
-                                    <p className="font-medium capitalize">{medicineName}</p>
-                                    <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
+            <Collapsible key={pharmacy.id} open={openPharmacy === pharmacy.id} onOpenChange={() => setOpenPharmacy(openPharmacy === pharmacy.id ? null : pharmacy.id)}>
+              <Card className="rounded-xl shadow-sm">
+                  <CardHeader className="p-4 flex flex-row items-center justify-between">
+                      <div>
+                          <h3 className="font-semibold">{pharmacy.name}</h3>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5 mr-1" />
+                              <span>{pharmacy.distance}</span>
+                          </div>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <ChevronDown className={cn("h-5 w-5 transition-transform", openPharmacy === pharmacy.id && "rotate-180")} />
+                            <span className="sr-only">View medicines</span>
+                          </Button>
+                      </CollapsibleTrigger>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                        {Object.entries(pharmacy.medicines)
+                            .filter(([medName, medInfo]) => 
+                                medInfo.status === 'In Stock' &&
+                                (!searchTerm || medName.toLowerCase().includes(searchTerm.toLowerCase()))
+                            )
+                            .map(([medicineName, medicineInfo]) => (
+                                <div key={medicineName} className="flex justify-between items-center">
+                                    <div>
+                                        <p className="font-medium capitalize">{medicineName}</p>
+                                        <p className="text-sm text-muted-foreground">₹{medicineInfo.price} | Qty: {medicineInfo.quantity}</p>
+                                    </div>
+                                    <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy, medicineName, medicineInfo.price)}>
+                                        <ShoppingCart className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                                <Button size="icon" className='h-8 w-8' onClick={() => handleOrder(pharmacy, medicineName, medicineInfo.price)}>
-                                    <ShoppingCart className="h-4 w-4" />
-                                </Button>
-                            </div>
-                    ))}
-                     {Object.values(pharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
-                        <p className="text-sm text-muted-foreground">No stock available.</p>
-                     )}
-                     {searchTerm && Object.entries(pharmacy.medicines).filter(([medName, medInfo]) => medInfo.status === 'In Stock' && medName.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                         <p className="text-sm text-muted-foreground">This medicine is not available here.</p>
-                     )}
-                </CardContent>
-            </Card>
+                        ))}
+                        {Object.values(pharmacy.medicines).filter(m => m.status === 'In Stock').length === 0 && (
+                            <p className="text-sm text-muted-foreground">No stock available.</p>
+                        )}
+                        {searchTerm && Object.entries(pharmacy.medicines).filter(([medName, medInfo]) => medInfo.status === 'In Stock' && medName.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                            <p className="text-sm text-muted-foreground">This medicine is not available here.</p>
+                        )}
+                    </CardContent>
+                  </CollapsibleContent>
+              </Card>
+            </Collapsible>
           ))
         ) : (
           <p className="text-center text-muted-foreground p-4">
