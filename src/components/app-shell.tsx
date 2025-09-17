@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User, Bot, Pill } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User, Bot, Pill, ScanText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -13,8 +13,9 @@ import Profile from '@/components/profile';
 import { Logo } from '@/components/icons';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Medical from './medical';
+import PrescriptionReader from './prescription-reader';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription';
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
@@ -33,6 +34,8 @@ export default function AppShell() {
         return <HealthRecords />;
       case 'medical':
         return <Medical />;
+      case 'prescription':
+        return <PrescriptionReader />;
       case 'profile':
         return <Profile />;
       default:
@@ -44,7 +47,7 @@ export default function AppShell() {
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'symptoms', icon: Bot, label: 'Symptoms' },
     { id: 'consult', icon: Stethoscope, label: 'Consult' },
-    { id: 'medical', icon: Pill, label: 'Medical' },
+    { id: 'prescription', icon: ScanText, label: 'Scan' },
     { id: 'records', icon: ClipboardList, label: 'Records' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];

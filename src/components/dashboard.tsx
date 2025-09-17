@@ -11,6 +11,7 @@ import {
   Newspaper,
   Calendar,
   AlertTriangle,
+  ScanText
 } from 'lucide-react';
 import type { Tab } from '@/components/app-shell';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -52,7 +53,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
   const quickAccessItems = [
     { title: 'Symptom Checker', icon: Bot, tab: 'symptoms' },
     { title: 'Book Consultation', icon: Stethoscope, tab: 'consult' },
-    { title: 'Health Records', icon: ClipboardList, tab: 'records' },
+    { title: 'Scan Prescription', icon: ScanText, tab: 'prescription' },
   ];
 
   return (
@@ -74,17 +75,30 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         ))}
       </div>
 
-      <Button
-        variant="outline"
-        className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
-        onClick={() => setActiveTab('medical')}
-      >
-        <Pill className="h-8 w-8 text-primary" />
-        <div>
-          <p className="font-bold text-base">Nearby Medical</p>
-          <p className="text-sm text-muted-foreground">Order medicines online</p>
-        </div>
-      </Button>
+       <div className="grid grid-cols-2 gap-3">
+         <Button
+            variant="outline"
+            className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
+            onClick={() => setActiveTab('medical')}
+          >
+            <Pill className="h-8 w-8 text-primary" />
+            <div>
+              <p className="font-bold text-base">Nearby Medical</p>
+              <p className="text-sm text-muted-foreground">Order medicines</p>
+            </div>
+          </Button>
+           <Button
+            variant="outline"
+            className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
+            onClick={() => setActiveTab('records')}
+          >
+            <ClipboardList className="h-8 w-8 text-primary" />
+            <div>
+              <p className="font-bold text-base">Health Records</p>
+              <p className="text-sm text-muted-foreground">View your history</p>
+            </div>
+          </Button>
+      </div>
 
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">

@@ -12,9 +12,12 @@ import { Separator } from '@/components/ui/separator';
 import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
+import { Calendar } from './ui/calendar';
+import { add, format, isSameDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
-type ConsultationStep = 'specialty' | 'doctors' | 'payment' | 'confirmation' | 'consulting';
+type ConsultationStep = 'specialty' | 'doctors' | 'time' | 'payment' | 'confirmation' | 'consulting';
 type ConsultationType = 'video' | 'audio' | 'chat';
 
 const consultationPrices = {
@@ -25,12 +28,11 @@ const consultationPrices = {
 
 const Teleconsultation = () => {
   const [step, setStep] = useState<ConsultationStep>('specialty');
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(
-    null
-  );
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [consultationType, setConsultationType] =
-    useState<ConsultationType | null>(null);
+  const [consultationType, setConsultationType] = useState<ConsultationType | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   const DynamicIcon = ({ name }: { name: keyof typeof LucideIcons }) => {
     const Icon = LucideIcons[name] as React.ElementType;
@@ -49,8 +51,13 @@ const Teleconsultation = () => {
   ) => {
     setSelectedDoctor(doctor);
     setConsultationType(type);
-    setStep('payment');
+    setStep('time');
   };
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    setStep('payment');
+  }
 
   const handlePayment = () => {
     setStep('consulting');
@@ -65,6 +72,8 @@ const Teleconsultation = () => {
     setSelectedSpecialty(null);
     setSelectedDoctor(null);
     setConsultationType(null);
+    setSelectedDate(new Date());
+    setSelectedTime(null);
   }
 
   const doctorsForSpecialty = selectedSpecialty
@@ -73,6 +82,11 @@ const Teleconsultation = () => {
 
   const doctorAvatar = (id: string) =>
     PlaceHolderImages.find((img) => img.id === `doctor-avatar-${id}`);
+
+  const today = new Date();
+  const availableSlots = selectedDoctor?.availabilitySlots
+    .find(day => selectedDate && isSameDay(new Date(day.date), selectedDate))
+    ?.slots || [];
 
   if (step === 'consulting' && selectedDoctor && consultationType) {
     switch (consultationType) {
@@ -116,9 +130,9 @@ const Teleconsultation = () => {
   if (step === 'payment') {
     return (
       <div className="animate-in fade-in duration-500">
-        <Button variant="ghost" size="sm" onClick={() => setStep('doctors')} className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => setStep('time')} className="mb-4">
           <LucideIcons.ArrowLeft className="mr-2 h-4 w-4" />
-          Back to doctors
+          Back to time selection
         </Button>
         <Card className="rounded-xl shadow-lg">
           <CardHeader>
@@ -142,10 +156,14 @@ const Teleconsultation = () => {
               </div>
             </div>
             <Separator />
-            <div className="space-y-2">
+            <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Consultation Type</span>
                     <span className="font-semibold capitalize">{consultationType}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date & Time</span>
+                    <span className="font-semibold capitalize">{selectedDate && format(selectedDate, 'dd MMM yyyy')}, {selectedTime}</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Fee</span>
@@ -168,6 +186,52 @@ const Teleconsultation = () => {
           </CardContent>
         </Card>
       </div>
+    )
+  }
+
+  if (step === 'time') {
+    return (
+        <div className="animate-in fade-in duration-500">
+            <Button variant="ghost" size="sm" onClick={() => setStep('doctors')} className="mb-4">
+                <LucideIcons.ArrowLeft className="mr-2 h-4 w-4" />
+                Back to doctors
+            </Button>
+             <h2 className="text-2xl font-bold font-headline mb-4">
+                Select a Time Slot
+            </h2>
+            <Card className='rounded-xl shadow-sm'>
+                <CardContent className='p-2 flex justify-center'>
+                     <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        fromDate={today}
+                        toDate={add(today, { days: 6 })}
+                        disabled={(date) => !selectedDoctor?.availabilitySlots.some(day => isSameDay(new Date(day.date), date))}
+                    />
+                </CardContent>
+            </Card>
+
+            <div className='mt-4'>
+                <h3 className='font-semibold mb-2 text-center'>Available Slots for {selectedDate && format(selectedDate, 'dd MMM yyyy')}</h3>
+                <div className='grid grid-cols-3 gap-2'>
+                    {availableSlots.length > 0 ? (
+                        availableSlots.map(time => (
+                            <Button 
+                                key={time} 
+                                variant='outline' 
+                                onClick={() => handleTimeSelect(time)}
+                                className={cn(selectedTime === time && 'bg-primary text-primary-foreground')}
+                            >
+                                {time}
+                            </Button>
+                        ))
+                    ) : (
+                        <p className='col-span-3 text-center text-muted-foreground text-sm py-4'>No slots available for this day.</p>
+                    )}
+                </div>
+            </div>
+        </div>
     )
   }
 
@@ -205,9 +269,18 @@ const Teleconsultation = () => {
                   <p className="text-sm text-muted-foreground">{doctor.experience} yrs experience</p>
                   <Badge variant="secondary" className="mt-1">{doctor.availability}</Badge>
                   <div className="flex gap-2 mt-3">
-                      <Button size="icon" variant="outline" onClick={() => handleSelectDoctor(doctor, 'video')}><LucideIcons.Video className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="outline" onClick={() => handleSelectDoctor(doctor, 'audio')}><LucideIcons.Phone className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="outline" onClick={() => handleSelectDoctor(doctor, 'chat')}><LucideIcons.MessageSquare className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'video')}>
+                        <LucideIcons.Video className="h-4 w-4 mr-2" />
+                        Video
+                      </Button>
+                      <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'audio')}>
+                        <LucideIcons.Phone className="h-4 w-4 mr-2" />
+                        Audio
+                      </Button>
+                      <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'chat')}>
+                        <LucideIcons.MessageSquare className="h-4 w-4 mr-2" />
+                        Chat
+                      </Button>
                   </div>
                 </div>
               </CardContent>

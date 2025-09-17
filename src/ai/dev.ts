@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/health-news-summaries.ts';
 import '@/ai/flows/ai-symptom-checker.ts';
+import '@/ai/flows/prescription-reader.ts';
