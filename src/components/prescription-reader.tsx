@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { ScanText, Upload, Activity, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
+import { ScanText, Upload, Activity, AlertTriangle, FileText, CheckCircle, MapPin } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { readPrescription, PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { pharmacies } from '@/lib/dummy-data';
 
 const PrescriptionReader = () => {
     const [file, setFile] = useState<File | null>(null);
@@ -61,6 +62,15 @@ const PrescriptionReader = () => {
         setResult(null);
         setError(null);
         setIsLoading(false);
+    };
+
+    const findPharmaciesForMedicine = (medicineName: string) => {
+        const medicineNameLower = medicineName.toLowerCase();
+        return pharmacies.filter(pharmacy => 
+            Object.keys(pharmacy.medicines).some(med => 
+                med.toLowerCase().includes(medicineNameLower) && pharmacy.medicines[med].status === 'In Stock'
+            )
+        );
     };
 
     return (
@@ -117,17 +127,36 @@ const PrescriptionReader = () => {
                         </div>
                         <Separator />
                         <h4 className="font-semibold">Medicines</h4>
-                        <div className='space-y-3'>
-                        {result.medicines.map((med, index) => (
-                            <div key={index} className="border p-3 rounded-lg text-sm">
-                                <div className='font-bold text-base capitalize mb-2'>{med.name}</div>
-                                <div className="grid grid-cols-3 gap-2 text-muted-foreground">
-                                    <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
-                                    <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
-                                    <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.duration}</Badge></div>
+                        <div className='space-y-4'>
+                        {result.medicines.map((med, index) => {
+                            const availablePharmacies = findPharmaciesForMedicine(med.name);
+                            return (
+                                <div key={index} className="border p-3 rounded-lg text-sm">
+                                    <div className='font-bold text-base capitalize mb-2'>{med.name}</div>
+                                    <div className="grid grid-cols-3 gap-2 text-muted-foreground">
+                                        <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
+                                        <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
+                                        <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.duration}</Badge></div>
+                                    </div>
+                                    {availablePharmacies.length > 0 && (
+                                        <div className='mt-3 pt-3 border-t'>
+                                             <h5 className='text-xs font-bold mb-2 text-primary'>Available at:</h5>
+                                             <div className='space-y-2'>
+                                                {availablePharmacies.map(p => (
+                                                    <div key={p.id} className='flex items-center justify-between text-xs'>
+                                                        <span>{p.name}</span>
+                                                        <div className='flex items-center gap-1 text-muted-foreground'>
+                                                            <MapPin className='w-3 h-3' />
+                                                            {p.distance}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                             </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                         </div>
                         <p className="text-xs text-muted-foreground/80 pt-4 border-t">
                             Disclaimer: This is an AI-generated analysis. Always verify with your doctor or pharmacist.
