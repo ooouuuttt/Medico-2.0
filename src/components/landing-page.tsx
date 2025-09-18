@@ -52,7 +52,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
           <div className="flex items-center gap-2">
             <Logo className="w-8 h-8" />
             <h1 className="text-2xl font-bold font-headline text-primary">
-              ArogyaSetu Mini
+              Medico
             </h1>
           </div>
         </header>
@@ -91,7 +91,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
                 Everything You Need for Better Health
               </h3>
               <p className="text-muted-foreground mt-2">
-                Explore the powerful features of ArogyaSetu Mini.
+                Explore the powerful features of Medico.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
@@ -119,7 +119,7 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
 
         <footer className="text-center py-8 border-t">
           <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} ArogyaSetu Mini. All rights
+            &copy; {new Date().getFullYear()} Medico. All rights
             reserved.
           </p>
         </footer>

@@ -75,7 +75,7 @@ export default function AppShell() {
           <div className="flex items-center gap-2">
             <Logo className="w-8 h-8" />
             <h1 className="text-xl font-bold font-headline text-primary">
-              ArogyaSetu Mini
+              Medico
             </h1>
           </div>
           {userAvatar && (

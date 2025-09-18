@@ -10,7 +10,7 @@
       "id": "landing-hero",
       "description": "Hero image for landing page",
       "imageUrl": "https://picsum.photos/seed/landing-hero/600/400",
-      "imageHint": "health technology"
+      "imageHint": "doctor"
     },
     {
       "id": "news-1",
