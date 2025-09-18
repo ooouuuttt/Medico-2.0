@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -22,6 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { LogOut } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -40,7 +44,7 @@ const Profile = () => {
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: 'Ravi Kumar',
+      name: auth.currentUser?.displayName || 'Ravi Kumar',
       age: 34,
       gender: 'male',
       contact: '9876543210',
@@ -57,9 +61,32 @@ const Profile = () => {
     });
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: 'Signed Out',
+        description: 'You have been successfully signed out.',
+      });
+    } catch (error) {
+      console.error('Sign out error', error);
+      toast({
+        variant: 'destructive',
+        title: 'Sign Out Failed',
+        description: 'There was an error signing you out. Please try again.',
+      });
+    }
+  };
+
   return (
     <div className="animate-in fade-in duration-500">
-      <h2 className="text-2xl font-bold font-headline mb-4">My Profile</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold font-headline">My Profile</h2>
+        <Button variant="ghost" size="sm" onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
