@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -78,7 +79,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
        <div className="grid grid-cols-2 gap-3">
          <Button
             variant="outline"
-            className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
+            className="w-full justify-center p-4 h-auto bg-card rounded-xl shadow-sm flex flex-col items-center gap-2 text-center"
             onClick={() => setActiveTab('medical')}
           >
             <Pill className="h-8 w-8 text-primary" />
@@ -89,7 +90,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
           </Button>
            <Button
             variant="outline"
-            className="w-full justify-start p-4 h-auto bg-card rounded-xl shadow-sm flex items-center gap-4 text-left"
+            className="w-full justify-center p-4 h-auto bg-card rounded-xl shadow-sm flex flex-col items-center gap-2 text-center"
             onClick={() => setActiveTab('records')}
           >
             <ClipboardList className="h-8 w-8 text-primary" />
