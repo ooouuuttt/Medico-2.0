@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -78,14 +79,21 @@ export default function AppShell() {
             </h1>
           </div>
           {userAvatar && (
-            <Image
-              src={userAvatar.imageUrl}
-              alt={userAvatar.description}
-              data-ai-hint={userAvatar.imageHint}
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-primary/50"
-            />
+            <Button
+              variant="ghost"
+              className="p-0 h-auto rounded-full"
+              onClick={() => setActiveTab('profile')}
+              aria-label="Open Profile"
+            >
+              <Image
+                src={userAvatar.imageUrl}
+                alt={userAvatar.description}
+                data-ai-hint={userAvatar.imageHint}
+                width={40}
+                height={40}
+                className="rounded-full border-2 border-primary/50"
+              />
+            </Button>
           )}
         </header>
 
