@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -53,9 +54,6 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
               ArogyaSetu Mini
             </h1>
           </div>
-          <Button variant="ghost" onClick={onGetStarted}>
-            Enter App
-          </Button>
         </header>
 
         <main className="space-y-16 md:space-y-24 py-12 md:py-20">
