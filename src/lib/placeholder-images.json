@@ -9,8 +9,8 @@
     {
       "id": "landing-hero",
       "description": "Hero image for landing page",
-      "imageUrl": "https://picsum.photos/seed/landing-hero/600/400",
-      "imageHint": "doctor"
+      "imageUrl": "https://picsum.photos/seed/doctor-hero/600/400",
+      "imageHint": "doctor stethoscope"
     },
     {
       "id": "news-1",
