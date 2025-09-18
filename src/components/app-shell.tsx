@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -16,6 +16,12 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Medical from './medical';
 import PrescriptionReader from './prescription-reader';
 import { Pharmacy } from '@/lib/dummy-data';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription';
 
@@ -79,21 +85,30 @@ export default function AppShell() {
             </h1>
           </div>
           {userAvatar && (
-            <Button
-              variant="ghost"
-              className="p-0 h-auto rounded-full"
-              onClick={() => setActiveTab('profile')}
-              aria-label="Open Profile"
-            >
-              <Image
-                src={userAvatar.imageUrl}
-                alt={userAvatar.description}
-                data-ai-hint={userAvatar.imageHint}
-                width={40}
-                height={40}
-                className="rounded-full border-2 border-primary/50"
-              />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="p-0 h-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="Open user menu"
+                >
+                  <Image
+                    src={userAvatar.imageUrl}
+                    alt={userAvatar.description}
+                    data-ai-hint={userAvatar.imageHint}
+                    width={40}
+                    height={40}
+                    className="rounded-full border-2 border-primary/50"
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setActiveTab('profile')}>
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </header>
 
