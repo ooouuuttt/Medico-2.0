@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,6 +45,7 @@ const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
 
 const Profile = () => {
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -57,13 +59,21 @@ const Profile = () => {
     },
   });
 
+  const originalValues = form.getValues();
+
   function onSubmit(values: z.infer<typeof profileSchema>) {
     console.log(values);
     toast({
       title: 'Profile Updated',
       description: 'Your details have been saved successfully.',
     });
+    setIsEditing(false);
   }
+
+  const handleCancel = () => {
+    form.reset(originalValues);
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -79,7 +89,7 @@ const Profile = () => {
               className="rounded-full border-4 border-primary/50 shadow-lg"
             />
           )}
-          <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full">
+          <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full" onClick={() => setIsEditing(true)} disabled={isEditing}>
             <Edit className="h-4 w-4"/>
           </Button>
         </div>
@@ -92,7 +102,7 @@ const Profile = () => {
 
       <Card className='rounded-xl'>
         <CardHeader>
-          <CardTitle>Edit Your Details</CardTitle>
+          <CardTitle>Your Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -104,7 +114,7 @@ const Profile = () => {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
+                      <Input placeholder="Enter your full name" {...field} disabled={!isEditing} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,7 +128,7 @@ const Profile = () => {
                     <FormItem>
                       <FormLabel>Age</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Your age" {...field} />
+                        <Input type="number" placeholder="Your age" {...field} disabled={!isEditing}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -133,6 +143,7 @@ const Profile = () => {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        disabled={!isEditing}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -157,7 +168,7 @@ const Profile = () => {
                   <FormItem>
                     <FormLabel>Contact Number</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="10-digit mobile number" {...field} />
+                      <Input type="tel" placeholder="10-digit mobile number" {...field} disabled={!isEditing}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -170,7 +181,7 @@ const Profile = () => {
                   <FormItem>
                     <FormLabel>Village/Town</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your village or town" {...field} />
+                      <Input placeholder="Your village or town" {...field} disabled={!isEditing}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,15 +197,27 @@ const Profile = () => {
                       <Textarea
                         placeholder="e.g., allergies, chronic conditions"
                         {...field}
+                        disabled={!isEditing}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
-                Save Changes
-              </Button>
+              {isEditing ? (
+                  <div className="flex gap-2">
+                    <Button type="submit" className="w-full">
+                      Save Changes
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancel} className="w-full">
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" onClick={() => setIsEditing(true)} className="w-full">
+                    Edit Profile
+                  </Button>
+                )}
             </form>
           </Form>
         </CardContent>
