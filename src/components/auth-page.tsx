@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  User,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +20,7 @@ import { Chrome } from 'lucide-react';
 import { Logo } from './icons';
 
 interface AuthPageProps {
-  onSignIn: () => void;
+  onSignIn: (user: User) => void;
 }
 
 const AuthPage = ({ onSignIn }: AuthPageProps) => {
@@ -32,9 +33,9 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       toast({ title: 'Sign up successful!' });
-      onSignIn();
+      onSignIn(userCredential.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -50,9 +51,9 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Sign in successful!' });
-      onSignIn();
+      onSignIn(userCredential.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -68,9 +69,9 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
       toast({ title: 'Google sign-in successful!' });
-      onSignIn();
+      onSignIn(userCredential.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',

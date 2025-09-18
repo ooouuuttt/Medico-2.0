@@ -22,12 +22,24 @@ export default function Home() {
         setView('app');
       } else {
         setUser(null);
-        setView('landing');
+        // If there's no user, but the view is 'app' (e.g., after sign-out),
+        // switch back to the landing page.
+        // Otherwise, let the current view ('auth' or 'landing') persist.
+        if (view === 'app') {
+          setView('landing');
+        } else if (view === 'loading') {
+          setView('landing');
+        }
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [view]);
+
+  const handleSuccessfulSignIn = (signedInUser: User) => {
+    setUser(signedInUser);
+    setView('app');
+  };
 
   if (view === 'loading') {
     return (
@@ -46,7 +58,7 @@ export default function Home() {
   }
 
   if (view === 'auth') {
-    return <AuthPage onSignIn={() => setView('app')} />;
+    return <AuthPage onSignIn={handleSuccessfulSignIn} />;
   }
 
   return <LandingPage onGetStarted={() => setView('auth')} />;
