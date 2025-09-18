@@ -7,6 +7,12 @@
       "imageHint": "person portrait"
     },
     {
+      "id": "landing-hero",
+      "description": "Hero image for landing page",
+      "imageUrl": "https://picsum.photos/seed/landing-hero/600/400",
+      "imageHint": "health technology"
+    },
+    {
       "id": "news-1",
       "description": "Placeholder for health news",
       "imageUrl": "https://picsum.photos/seed/news1/600/400",
