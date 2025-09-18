@@ -14,18 +14,35 @@ import { Logo } from '@/components/icons';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Medical from './medical';
 import PrescriptionReader from './prescription-reader';
+import { Pharmacy } from '@/lib/dummy-data';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription';
+
+export interface MedicalTabState {
+  pharmacy?: Pharmacy;
+  medicineName?: string;
+}
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
 export default function AppShell() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [medicalTabState, setMedicalTabState] = useState<MedicalTabState>({});
+
+  const handleSetActiveTab = (tab: Tab, state?: MedicalTabState) => {
+    if (tab === 'medical' && state) {
+      setMedicalTabState(state);
+    } else {
+      setMedicalTabState({});
+    }
+    setActiveTab(tab);
+  };
+
 
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard setActiveTab={setActiveTab} />;
+        return <Dashboard setActiveTab={handleSetActiveTab} />;
       case 'symptoms':
         return <SymptomChecker />;
       case 'consult':
@@ -33,13 +50,13 @@ export default function AppShell() {
       case 'records':
         return <HealthRecords />;
       case 'medical':
-        return <Medical />;
+        return <Medical initialState={medicalTabState} />;
       case 'prescription':
-        return <PrescriptionReader />;
+        return <PrescriptionReader setActiveTab={handleSetActiveTab} />;
       case 'profile':
         return <Profile />;
       default:
-        return <Dashboard setActiveTab={setActiveTab} />;
+        return <Dashboard setActiveTab={handleSetActiveTab} />;
     }
   };
 

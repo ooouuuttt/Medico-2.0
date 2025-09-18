@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,17 +16,39 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { MedicalTabState } from './app-shell';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
 
-const MedicineAvailability = () => {
+interface MedicineAvailabilityProps {
+  initialState?: MedicalTabState;
+}
+
+
+const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [selectedMedicine, setSelectedMedicine] = useState<{name: string, price: number, quantity: number} | null>(null);
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (initialState?.pharmacy && initialState?.medicineName) {
+      const pharmacy = pharmacies.find(p => p.id === initialState.pharmacy?.id);
+      if (pharmacy) {
+        const medicineKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(initialState.medicineName!.toLowerCase()));
+        if (medicineKey) {
+            const medicineInfo = pharmacy.medicines[medicineKey];
+            if (medicineInfo.status === 'In Stock') {
+                handleSelectPharmacy(pharmacy);
+                handleSelectMedicine(medicineKey, medicineInfo.price, medicineInfo.quantity);
+            }
+        }
+      }
+    }
+  }, [initialState]);
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
@@ -175,14 +197,14 @@ const MedicineAvailability = () => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full justify-between">
-                              <span>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
+                              <span className='capitalize'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
                               <ChevronDown className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                             {availableMedicines.map(([medicineName, medicineInfo]) => (
                                 <DropdownMenuItem key={medicineName} onClick={() => handleSelectMedicine(medicineName, medicineInfo.price, medicineInfo.quantity)}>
-                                    {medicineName}
+                                    <span className='capitalize'>{medicineName}</span>
                                 </DropdownMenuItem>
                             ))}
                           </DropdownMenuContent>

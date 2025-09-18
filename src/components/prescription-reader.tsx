@@ -2,15 +2,21 @@
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { ScanText, Upload, Activity, AlertTriangle, FileText, CheckCircle, MapPin } from 'lucide-react';
+import { ScanText, Upload, Activity, AlertTriangle, CheckCircle, MapPin, ShoppingCart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { readPrescription, PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { pharmacies } from '@/lib/dummy-data';
+import { pharmacies, Pharmacy } from '@/lib/dummy-data';
+import { Tab, MedicalTabState } from './app-shell';
 
-const PrescriptionReader = () => {
+interface PrescriptionReaderProps {
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+}
+
+
+const PrescriptionReader = ({ setActiveTab }: PrescriptionReaderProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [result, setResult] = useState<PrescriptionReaderOutput | null>(null);
@@ -64,13 +70,18 @@ const PrescriptionReader = () => {
         setIsLoading(false);
     };
 
-    const findPharmaciesForMedicine = (medicineName: string) => {
+    const findPharmaciesForMedicine = (medicineName: string): Pharmacy[] => {
+        if (!medicineName) return [];
         const medicineNameLower = medicineName.toLowerCase().trim();
         return pharmacies.filter(pharmacy => 
             Object.keys(pharmacy.medicines).some(med => 
                 med.toLowerCase().trim().includes(medicineNameLower) && pharmacy.medicines[med].status === 'In Stock'
             )
         );
+    };
+    
+    const handleOrderClick = (pharmacy: Pharmacy, medicineName: string) => {
+        setActiveTab('medical', { pharmacy, medicineName });
     };
 
     return (
@@ -144,11 +155,16 @@ const PrescriptionReader = () => {
                                              <div className='space-y-2'>
                                                 {availablePharmacies.map(p => (
                                                     <div key={p.id} className='flex items-center justify-between text-xs'>
-                                                        <span>{p.name}</span>
-                                                        <div className='flex items-center gap-1 text-muted-foreground'>
+                                                        <div className='flex items-center gap-2'>
                                                             <MapPin className='w-3 h-3' />
-                                                            {p.distance}
+                                                            <div>
+                                                                <span>{p.name}</span>
+                                                                <span className='text-muted-foreground/80 ml-1'>({p.distance})</span>
+                                                            </div>
                                                         </div>
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOrderClick(p, med.name)}>
+                                                            <ShoppingCart className="h-4 w-4 text-primary" />
+                                                        </Button>
                                                     </div>
                                                 ))}
                                              </div>

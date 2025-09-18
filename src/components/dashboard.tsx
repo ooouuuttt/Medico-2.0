@@ -76,7 +76,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         ))}
       </div>
 
-       <div className="grid grid-cols-2 gap-3">
+       <div className="grid grid-cols-1 gap-3">
          <Button
             variant="outline"
             className="w-full justify-center p-4 h-auto bg-card rounded-xl shadow-sm flex flex-col items-center gap-2 text-center"
