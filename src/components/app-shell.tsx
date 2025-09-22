@@ -26,10 +26,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import Appointments from './appointments';
 import { useTranslation } from '@/context/i18n';
@@ -110,50 +106,53 @@ export default function AppShell({ user }: AppShellProps) {
               Medico
             </h1>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="p-0 h-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
-                  aria-label="Open user menu"
-                >
-                  <Image
-                    src={user.photoURL || userAvatar?.imageUrl || ''}
-                    alt={user.displayName || 'User Avatar'}
-                    data-ai-hint={userAvatar?.imageHint}
-                    width={40}
-                    height={40}
-                    className="rounded-full border-2 border-primary/50"
-                  />
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Globe />
                 </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setActiveTab('profile')}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>{t('profile')}</span>
-              </DropdownMenuItem>
-               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Globe className="mr-2 h-4 w-4" />
-                  <span>Language</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLanguage('hi')}>हिन्दी</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLanguage('pa')}>ਪੰਜਾਬੀ</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('log_out')}</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('hi')}>हिन्दी</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('pa')}>ਪੰਜਾਬੀ</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="p-0 h-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+                    aria-label="Open user menu"
+                  >
+                    <Image
+                      src={user.photoURL || userAvatar?.imageUrl || ''}
+                      alt={user.displayName || 'User Avatar'}
+                      data-ai-hint={userAvatar?.imageHint}
+                      width={40}
+                      height={40}
+                      className="rounded-full border-2 border-primary/50"
+                    />
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setActiveTab('profile')}>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>{t('profile')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t('log_out')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
 
         <main className="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
