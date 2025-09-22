@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Globe } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -43,11 +43,17 @@ interface AppShellProps {
   user: User;
 }
 
+const languageNames = {
+  en: 'English',
+  hi: 'हिन्दी',
+  pa: 'ਪੰਜਾਬੀ',
+};
+
 export default function AppShell({ user }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [medicalTabState, setMedicalTabState] = useState<MedicalTabState>({});
   const { toast } = useToast();
-  const { t, setLanguage } = useTranslation();
+  const { language, t, setLanguage } = useTranslation();
 
 
   const handleSetActiveTab = (tab: Tab, state?: MedicalTabState) => {
@@ -109,12 +115,14 @@ export default function AppShell({ user }: AppShellProps) {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Globe />
-                </Button>
+                  <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm bg-primary/10 hover:bg-primary/20">
+                      <Languages className="w-5 h-5 text-primary"/>
+                      <span>{languageNames[language]}</span>
+                      <ChevronDown className="w-4 h-4 text-primary/80"/>
+                  </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuLabel>Select Language</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('hi')}>हिन्दी</DropdownMenuItem>
