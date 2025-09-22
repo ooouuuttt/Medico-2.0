@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -62,7 +63,7 @@ const ChatConsultation = ({ doctor, onEnd }: ChatConsultationProps) => {
          <div className='flex items-center gap-3'>
             {doctorAvatar && (
                 <Avatar>
-                    <AvatarImage src={doctorAvatar.imageUrl} alt={`Dr. ${doctor.name}`} />
+                    <AvatarImage src={doctorAvatar.imageUrl} alt={`Dr. ${doctor.name}`} className="object-cover" />
                     <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             )}
@@ -83,7 +84,7 @@ const ChatConsultation = ({ doctor, onEnd }: ChatConsultationProps) => {
             <div key={index} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.sender === 'doctor' && doctorAvatar && (
                      <Avatar className='h-8 w-8'>
-                        <AvatarImage src={doctorAvatar.imageUrl} />
+                        <AvatarImage src={doctorAvatar.imageUrl} className="object-cover"/>
                         <AvatarFallback>{doctor.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                 )}
@@ -93,7 +94,7 @@ const ChatConsultation = ({ doctor, onEnd }: ChatConsultationProps) => {
                 </div>
                  {msg.sender === 'user' && userAvatar && (
                      <Avatar className='h-8 w-8'>
-                        <AvatarImage src={userAvatar.imageUrl} />
+                        <AvatarImage src={userAvatar.imageUrl} className="object-cover" />
                         <AvatarFallback>U</AvatarFallback>
                     </Avatar>
                 )}
@@ -119,3 +120,4 @@ const ChatConsultation = ({ doctor, onEnd }: ChatConsultationProps) => {
 };
 
 export default ChatConsultation;
+
