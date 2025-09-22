@@ -1,38 +1,28 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
+import { User } from 'firebase/auth';
+import { Skeleton } from './ui/skeleton';
 
-// Dummy data for appointments - in a real app, this would come from Firestore
-const appointments = [
-  {
-    id: 'apt1',
-    doctorName: 'Dr. Anjali Sharma',
-    specialty: 'General Physician',
-    type: 'video' as const,
-    date: '2024-08-05T10:00:00',
-    status: 'upcoming' as const,
-  },
-  {
-    id: 'apt2',
-    doctorName: 'Dr. Rohan Mehra',
-    specialty: 'Pediatrics',
-    type: 'chat' as const,
-    date: '2024-07-28T14:30:00',
-    status: 'completed' as const,
-  },
-  {
-    id: 'apt3',
-    doctorName: 'Dr. Priya Singh',
-    specialty: 'Gynecology',
-    type: 'audio' as const,
-    date: '2024-07-25T11:00:00',
-    status: 'completed' as const,
-  },
-];
+interface Appointment extends DocumentData {
+    id: string;
+    doctorName: string;
+    specialty: string;
+    type: 'video' | 'audio' | 'chat';
+    date: string; // ISO string
+    status: 'upcoming' | 'completed' | 'cancelled';
+}
+
+interface AppointmentsProps {
+    user: User;
+}
 
 const AppointmentIcon = ({ type }: { type: 'video' | 'audio' | 'chat' }) => {
     switch (type) {
@@ -43,9 +33,57 @@ const AppointmentIcon = ({ type }: { type: 'video' | 'audio' | 'chat' }) => {
     }
 };
 
-const Appointments = () => {
+const Appointments = ({ user }: AppointmentsProps) => {
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        };
+
+        setIsLoading(true);
+        const q = query(
+            collection(db, 'appointments'),
+            where('patientId', '==', user.uid),
+            orderBy('date', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const fetchedAppointments: Appointment[] = [];
+            querySnapshot.forEach((doc) => {
+                fetchedAppointments.push({ id: doc.id, ...doc.data() } as Appointment);
+            });
+            setAppointments(fetchedAppointments);
+            setIsLoading(false);
+        }, (error) => {
+            console.error("Failed to fetch appointments:", error);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
+
     const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
-    const pastAppointments = appointments.filter(a => a.status === 'completed');
+    const pastAppointments = appointments.filter(a => a.status !== 'upcoming');
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold font-headline">Your Appointments</h2>
+                <div className="space-y-4">
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
+                <div className="space-y-4">
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
+            </div>
+        );
+    }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -104,7 +142,7 @@ const Appointments = () => {
                                 </p>
                             </div>
                         </div>
-                        <Button variant="outline">View Details</Button>
+                         <Badge variant={apt.status === 'completed' ? 'default' : 'destructive'} className='capitalize bg-green-100 text-green-800'>{apt.status}</Badge>
                     </CardContent>
                 </Card>
             ))

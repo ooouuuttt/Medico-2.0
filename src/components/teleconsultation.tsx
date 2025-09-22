@@ -7,7 +7,6 @@ import * as LucideIcons from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { specialties } from '@/lib/dummy-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import VideoConsultation from './video-consultation';
@@ -17,8 +16,10 @@ import { Calendar } from './ui/calendar';
 import { add, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, query, DocumentData, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
+import { User } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface Doctor extends DocumentData {
   id: string;
@@ -26,6 +27,10 @@ interface Doctor extends DocumentData {
   specialization: string;
   bio: string;
   avatar?: string;
+}
+
+interface TeleconsultationProps {
+  user: User;
 }
 
 type ConsultationStep = 'specialty' | 'doctors' | 'time' | 'payment' | 'confirmation' | 'consulting';
@@ -37,7 +42,7 @@ const consultationPrices = {
   chat: 150,
 };
 
-const Teleconsultation = () => {
+const Teleconsultation = ({ user }: TeleconsultationProps) => {
   const [step, setStep] = useState<ConsultationStep>('specialty');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -46,6 +51,7 @@ const Teleconsultation = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsLoading(true);
@@ -91,19 +97,51 @@ const Teleconsultation = () => {
     setStep('payment');
   }
 
-  const handlePayment = () => {
-    // In a real app, you'd save the appointment to the database here.
-    console.log('Appointment booked with:', {
-      doctorId: selectedDoctor?.id,
-      type: consultationType,
-      date: selectedDate,
-      time: selectedTime,
-    });
-    setStep('confirmation');
+  const handlePayment = async () => {
+    if (!selectedDoctor || !consultationType || !selectedDate || !selectedTime || !user) {
+        toast({
+            variant: "destructive",
+            title: "Booking Failed",
+            description: "Missing information for booking.",
+        });
+        return;
+    }
+
+    try {
+        const appointmentDate = new Date(selectedDate);
+        const [time, period] = selectedTime.split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        
+        if (period === 'PM' && hours < 12) {
+            hours += 12;
+        }
+        if (period === 'AM' && hours === 12) {
+            hours = 0;
+        }
+        appointmentDate.setHours(hours, minutes, 0, 0);
+
+        await addDoc(collection(db, "appointments"), {
+            patientId: user.uid,
+            doctorId: selectedDoctor.id,
+            doctorName: selectedDoctor.name,
+            specialty: selectedDoctor.specialization,
+            type: consultationType,
+            date: appointmentDate.toISOString(),
+            status: 'upcoming',
+            createdAt: serverTimestamp(),
+        });
+        setStep('confirmation');
+    } catch (error) {
+        console.error("Error booking appointment: ", error);
+        toast({
+            variant: "destructive",
+            title: "Booking Error",
+            description: "Could not save the appointment. Please try again.",
+        });
+    }
   };
 
   const handleEndConsultation = () => {
-    // This is now less relevant as we book appointments, but can be used for ended calls.
     setStep('specialty');
   }
 
@@ -124,7 +162,6 @@ const Teleconsultation = () => {
     doctor.avatar || `https://picsum.photos/seed/${doctor.id}/80/80`;
 
   const today = new Date();
-  // Using dummy availability for now
   const availableSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM'];
 
 
@@ -381,6 +418,3 @@ const Teleconsultation = () => {
 };
 
 export default Teleconsultation;
-
-    
-    

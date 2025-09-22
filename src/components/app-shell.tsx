@@ -69,11 +69,11 @@ export default function AppShell({ user }: AppShellProps) {
       case 'symptoms':
         return <SymptomChecker />;
       case 'consult':
-        return <Teleconsultation />;
+        return <Teleconsultation user={user} />;
       case 'records':
         return <HealthRecords />;
       case 'appointments':
-        return <Appointments />;
+        return <Appointments user={user} />;
       case 'medical':
         return <Medical initialState={medicalTabState} />;
       case 'prescription':
