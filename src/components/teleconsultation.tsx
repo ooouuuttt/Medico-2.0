@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import * as LucideIcons from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { specialties } from '@/lib/dummy-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -14,7 +14,7 @@ import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
 import { Calendar } from './ui/calendar';
-import { add, format, isSameDay } from 'date-fns';
+import { add, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, DocumentData } from 'firebase/firestore';
@@ -149,7 +149,7 @@ const Teleconsultation = () => {
         <h2 className="text-2xl font-bold font-headline">Consultation Ended</h2>
         <p className="text-muted-foreground">
           Your {consultationType} consultation with{' '}
-          <strong>Dr. {selectedDoctor?.name}</strong> has ended.
+          <strong>{selectedDoctor?.name}</strong> has ended.
         </p>
         <p className="text-sm text-muted-foreground">
           We hope you found it helpful.
@@ -182,14 +182,14 @@ const Teleconsultation = () => {
               {selectedDoctor && (
                 <Image
                   src={doctorAvatar(selectedDoctor)}
-                  alt={`Dr. ${selectedDoctor.name}`}
+                  alt={selectedDoctor.name}
                   width={64}
                   height={64}
                   className="rounded-full border-2 border-primary object-cover"
                 />
               )}
               <div>
-                <h3 className="font-bold text-lg">Dr. {selectedDoctor?.name}</h3>
+                <h3 className="font-bold text-lg">{selectedDoctor?.name}</h3>
                 <p className="text-muted-foreground">{selectedDoctor?.specialization}</p>
               </div>
             </div>
@@ -306,14 +306,14 @@ const Teleconsultation = () => {
               <Card key={doctor.id} className="rounded-xl shadow-sm overflow-hidden">
                 <CardContent className="p-4 flex gap-4">
                     <Image
-                      src={doctorAvatar(doctor)}
-                      alt={`Dr. ${doctor.name}`}
+                      src={doctor.avatar || `https://picsum.photos/seed/${doctor.id}/80/80`}
+                      alt={doctor.name}
                       width={80}
                       height={80}
                       className="rounded-lg object-cover"
                     />
                   <div className="flex-grow">
-                    <h3 className="font-bold">{`Dr. ${doctor.name}`}</h3>
+                    <h3 className="font-bold">{doctor.name}</h3>
                     <p className="text-sm text-muted-foreground">{doctor.bio}</p>
                     <Badge variant="secondary" className="mt-1">{doctor.specialization}</Badge>
                     <div className="flex gap-2 mt-3">
@@ -373,7 +373,5 @@ const Teleconsultation = () => {
 };
 
 export default Teleconsultation;
-
-    
 
     
