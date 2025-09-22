@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   User,
+  updateProfile,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +27,7 @@ interface AuthPageProps {
 const AuthPage = ({ onSignIn }: AuthPageProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -34,8 +36,10 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      const updatedUser = { ...userCredential.user, displayName: name };
       toast({ title: 'Sign up successful!' });
-      onSignIn(userCredential.user);
+      onSignIn(updatedUser as User);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -88,7 +92,7 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
       <div className="w-full max-w-md">
         <div className="flex justify-center items-center gap-2 mb-6">
           <Logo className="w-8 h-8" />
-          <h1 className="text-2xl font-bold font-headline text-primary">ArogyaSetu Mini</h1>
+          <h1 className="text-2xl font-bold font-headline text-primary">Medico</h1>
         </div>
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -148,11 +152,22 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
               <CardHeader>
                 <CardTitle>Create an Account</CardTitle>
                 <CardDescription>
-                  Enter your email below to create your account.
+                  Enter your details below to create your account.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleManualSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="John Doe"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input

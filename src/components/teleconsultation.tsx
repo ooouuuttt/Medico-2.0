@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import * as LucideIcons from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { specialties } from '@/lib/dummy-data';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
@@ -122,7 +122,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 
         await addDoc(collection(db, "appointments"), {
             patientId: user.uid,
-            patientName: user.displayName,
+            patientName: user.displayName || 'Unknown',
             doctorId: selectedDoctor.id,
             doctorName: selectedDoctor.name,
             specialty: selectedDoctor.specialization,
@@ -419,3 +419,5 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 };
 
 export default Teleconsultation;
+
+    
