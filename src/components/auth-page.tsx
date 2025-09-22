@@ -36,10 +36,20 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Ensure display name is set before calling onSignIn
       await updateProfile(userCredential.user, { displayName: name });
-      const updatedUser = { ...userCredential.user, displayName: name };
+      
+      // Manually reload the user to get the updated profile
+      await userCredential.user.reload();
+      const updatedUser = auth.currentUser;
+
       toast({ title: 'Sign up successful!' });
-      onSignIn(updatedUser as User);
+      if (updatedUser) {
+        onSignIn(updatedUser);
+      } else {
+        throw new Error("Could not get updated user.");
+      }
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
