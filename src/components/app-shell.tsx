@@ -142,7 +142,7 @@ export default function AppShell({ user }: AppShellProps) {
                       data-ai-hint={userAvatar?.imageHint}
                       width={40}
                       height={40}
-                      className="rounded-full border-2 border-primary/50"
+                      className="rounded-full border-2 border-primary/50 object-cover"
                     />
                   </Button>
               </DropdownMenuTrigger>

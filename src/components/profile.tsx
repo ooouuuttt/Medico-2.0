@@ -137,7 +137,7 @@ const Profile = ({ user }: ProfileProps) => {
               data-ai-hint={userAvatar?.imageHint}
               width={100}
               height={100}
-              className="rounded-full border-4 border-primary/50 shadow-lg"
+              className="rounded-full border-4 border-primary/50 shadow-lg object-cover"
             />
           <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full" onClick={() => setIsEditing(true)} disabled={isEditing || isLoading}>
             <Edit className="h-4 w-4"/>
