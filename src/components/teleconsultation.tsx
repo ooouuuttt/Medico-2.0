@@ -23,9 +23,9 @@ import { Skeleton } from './ui/skeleton';
 interface Doctor extends DocumentData {
   id: string;
   name: string;
-  specialty: string;
-  experience: number;
-  photoURL?: string;
+  specialization: string;
+  bio: string;
+  avatar?: string;
 }
 
 type ConsultationStep = 'specialty' | 'doctors' | 'time' | 'payment' | 'confirmation' | 'consulting';
@@ -109,11 +109,11 @@ const Teleconsultation = () => {
   }
 
   const doctorsForSpecialty = selectedSpecialty
-    ? allDoctors.filter((d) => d.specialty === selectedSpecialty)
+    ? allDoctors.filter((d) => d.specialization === selectedSpecialty)
     : allDoctors;
 
   const doctorAvatar = (doctor: Doctor) =>
-    doctor.photoURL || PlaceHolderImages.find((img) => img.id === `doctor-avatar-${doctor.id}`)?.imageUrl || `https://picsum.photos/seed/${doctor.id}/80/80`;
+    doctor.avatar || PlaceHolderImages.find((img) => img.id === `doctor-avatar-${doctor.id}`)?.imageUrl || `https://picsum.photos/seed/${doctor.id}/80/80`;
 
   const today = new Date();
   // Using dummy availability for now
@@ -121,13 +121,20 @@ const Teleconsultation = () => {
 
 
   if (step === 'consulting' && selectedDoctor && consultationType) {
+    // The Doctor type for consultation components is different, so we adapt it.
+    const dummyDoctorForConsult = {
+        id: selectedDoctor.id,
+        name: selectedDoctor.name,
+        specialty: selectedDoctor.specialization,
+        experience: 0, // Not available in new schema
+    };
     switch (consultationType) {
       case 'video':
-        return <VideoConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+        return <VideoConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
       case 'audio':
-        return <AudioConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+        return <AudioConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
       case 'chat':
-        return <ChatConsultation doctor={selectedDoctor} onEnd={handleEndConsultation} />;
+        return <ChatConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
       default:
         handleReset();
         return null;
@@ -183,7 +190,7 @@ const Teleconsultation = () => {
               )}
               <div>
                 <h3 className="font-bold text-lg">Dr. {selectedDoctor?.name}</h3>
-                <p className="text-muted-foreground">{selectedDoctor?.specialty}</p>
+                <p className="text-muted-foreground">{selectedDoctor?.specialization}</p>
               </div>
             </div>
             <Separator />
@@ -238,7 +245,6 @@ const Teleconsultation = () => {
                         onSelect={setSelectedDate}
                         fromDate={today}
                         toDate={add(today, { days: 6 })}
-                        // disabled={(date) => !selectedDoctor?.availabilitySlots.some(day => isSameDay(new Date(day.date), date))}
                     />
                 </CardContent>
             </Card>
@@ -308,8 +314,8 @@ const Teleconsultation = () => {
                     />
                   <div className="flex-grow">
                     <h3 className="font-bold">{`Dr. ${doctor.name}`}</h3>
-                    <p className="text-sm text-muted-foreground">{doctor.experience} yrs experience</p>
-                    <Badge variant="secondary" className="mt-1">{doctor.specialty}</Badge>
+                    <p className="text-sm text-muted-foreground">{doctor.bio}</p>
+                    <Badge variant="secondary" className="mt-1">{doctor.specialization}</Badge>
                     <div className="flex gap-2 mt-3">
                         <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'video')}>
                           <LucideIcons.Video className="h-4 w-4 mr-2" />
@@ -329,7 +335,7 @@ const Teleconsultation = () => {
               </Card>
             ))
            ) : (
-             <p className="text-center text-muted-foreground p-4">No doctors found.</p>
+             <p className="text-center text-muted-foreground p-4">No doctors found for this specialty.</p>
            )
           }
         </div>
@@ -367,5 +373,7 @@ const Teleconsultation = () => {
 };
 
 export default Teleconsultation;
+
+    
 
     
