@@ -110,7 +110,7 @@ const Teleconsultation = () => {
 
   const doctorsForSpecialty = selectedSpecialty
     ? allDoctors.filter((d) => d.specialty === selectedSpecialty)
-    : [];
+    : allDoctors;
 
   const doctorAvatar = (doctor: Doctor) =>
     doctor.photoURL || PlaceHolderImages.find((img) => img.id === `doctor-avatar-${doctor.id}`)?.imageUrl || `https://picsum.photos/seed/${doctor.id}/80/80`;
@@ -269,7 +269,7 @@ const Teleconsultation = () => {
   if (step === 'doctors') {
     return (
       <div className="animate-in fade-in duration-500">
-        <Button variant="ghost" size="sm" onClick={() => setStep('specialty')} className="mb-4">
+        <Button variant="ghost" size="sm" onClick={() => { setStep('specialty'); setSelectedSpecialty(null); }} className="mb-4">
           <LucideIcons.ArrowLeft className="mr-2 h-4 w-4" />
           Back to specialties
         </Button>
@@ -278,7 +278,7 @@ const Teleconsultation = () => {
             Available Doctors
           </h2>
           <p className="text-muted-foreground">
-            For {selectedSpecialty}
+            {selectedSpecialty ? `For ${selectedSpecialty}` : 'All Specialists'}
           </p>
         </div>
         <div className="space-y-4">
@@ -309,7 +309,7 @@ const Teleconsultation = () => {
                   <div className="flex-grow">
                     <h3 className="font-bold">{`Dr. ${doctor.name}`}</h3>
                     <p className="text-sm text-muted-foreground">{doctor.experience} yrs experience</p>
-                    <Badge variant="secondary" className="mt-1">Available Today</Badge>
+                    <Badge variant="secondary" className="mt-1">{doctor.specialty}</Badge>
                     <div className="flex gap-2 mt-3">
                         <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'video')}>
                           <LucideIcons.Video className="h-4 w-4 mr-2" />
@@ -329,7 +329,7 @@ const Teleconsultation = () => {
               </Card>
             ))
            ) : (
-             <p className="text-center text-muted-foreground p-4">No doctors found for this specialty.</p>
+             <p className="text-center text-muted-foreground p-4">No doctors found.</p>
            )
           }
         </div>
@@ -361,6 +361,7 @@ const Teleconsultation = () => {
           </Card>
         ))}
       </div>
+       <Button onClick={() => setStep('doctors')} className="w-full mt-4">View All Doctors</Button>
     </div>
   );
 };
