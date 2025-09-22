@@ -122,6 +122,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 
         await addDoc(collection(db, "appointments"), {
             patientId: user.uid,
+            patientName: user.displayName,
             doctorId: selectedDoctor.id,
             doctorName: selectedDoctor.name,
             specialty: selectedDoctor.specialization,
