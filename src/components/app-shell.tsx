@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -16,6 +16,17 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Medical from './medical';
 import PrescriptionReader from './prescription-reader';
 import { Pharmacy } from '@/lib/dummy-data';
+import { User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription';
 
@@ -26,9 +37,14 @@ export interface MedicalTabState {
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
-export default function AppShell() {
+interface AppShellProps {
+  user: User;
+}
+
+export default function AppShell({ user }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [medicalTabState, setMedicalTabState] = useState<MedicalTabState>({});
+  const { toast } = useToast();
 
   const handleSetActiveTab = (tab: Tab, state?: MedicalTabState) => {
     if (tab === 'medical' && state) {
@@ -37,6 +53,11 @@ export default function AppShell() {
       setMedicalTabState({});
     }
     setActiveTab(tab);
+  };
+
+  const handleSignOut = async () => {
+    await auth.signOut();
+    toast({ title: 'Signed out successfully.'});
   };
 
 
@@ -55,7 +76,7 @@ export default function AppShell() {
       case 'prescription':
         return <PrescriptionReader setActiveTab={handleSetActiveTab} />;
       case 'profile':
-        return <Profile />;
+        return <Profile user={user} />;
       default:
         return <Dashboard setActiveTab={handleSetActiveTab} />;
     }
@@ -65,7 +86,7 @@ export default function AppShell() {
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'consult', icon: Stethoscope, label: 'Consult' },
     { id: 'records', icon: ClipboardList, label: 'Records' },
-    { id: 'profile', icon: User, label: 'Profile' },
+    { id: 'profile', icon: UserIcon, label: 'Profile' },
   ];
 
   return (
@@ -78,23 +99,36 @@ export default function AppShell() {
               Medico
             </h1>
           </div>
-          {userAvatar && (
-            <Button
-              variant="ghost"
-              className="p-0 h-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
-              aria-label="Open user menu"
-              onClick={() => setActiveTab('profile')}
-            >
-              <Image
-                src={userAvatar.imageUrl}
-                alt={userAvatar.description}
-                data-ai-hint={userAvatar.imageHint}
-                width={40}
-                height={40}
-                className="rounded-full border-2 border-primary/50"
-              />
-            </Button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="p-0 h-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0"
+                  aria-label="Open user menu"
+                >
+                  <Image
+                    src={user.photoURL || userAvatar?.imageUrl || ''}
+                    alt={user.displayName || 'User Avatar'}
+                    data-ai-hint={userAvatar?.imageHint}
+                    width={40}
+                    height={40}
+                    className="rounded-full border-2 border-primary/50"
+                  />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setActiveTab('profile')}>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         <main className="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">

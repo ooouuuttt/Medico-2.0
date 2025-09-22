@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +27,10 @@ import {
 } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Edit } from 'lucide-react';
+import { Edit, Activity } from 'lucide-react';
+import { User } from 'firebase/auth';
+import { getUserProfile, updateUserProfile } from '@/lib/user-service';
+import { Skeleton } from './ui/skeleton';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -41,55 +44,102 @@ const profileSchema = z.object({
   medicalHistory: z.string().optional(),
 });
 
+type ProfileData = z.infer<typeof profileSchema>;
+
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
+interface ProfileProps {
+  user: User;
+}
 
-const Profile = () => {
+const Profile = ({ user }: ProfileProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [originalValues, setOriginalValues] = useState<ProfileData | null>(null);
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof profileSchema>>({
+  
+  const form = useForm<ProfileData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: 'Ravi Kumar',
-      age: 34,
-      gender: 'male',
-      contact: '9876543210',
-      village: 'Rampur',
-      medicalHistory: 'No significant medical history. Allergic to penicillin.',
+      name: '',
+      age: 0,
+      gender: '',
+      contact: '',
+      village: '',
+      medicalHistory: '',
     },
   });
 
-  const originalValues = form.getValues();
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      const profileData = await getUserProfile(user);
+      if (profileData) {
+        form.reset(profileData);
+        setOriginalValues(profileData);
+      } else {
+        // Pre-fill with some data if no profile exists
+        const defaultData = {
+          name: user.displayName || 'New User',
+          age: 30,
+          gender: 'other',
+          contact: '0000000000',
+          village: 'Unknown',
+          medicalHistory: '',
+        };
+        form.reset(defaultData);
+        setOriginalValues(defaultData);
+      }
+      setIsLoading(false);
+    };
+    fetchProfile();
+  }, [user, form]);
 
-  function onSubmit(values: z.infer<typeof profileSchema>) {
-    console.log(values);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your details have been saved successfully.',
-    });
-    setIsEditing(false);
+  async function onSubmit(values: ProfileData) {
+    setIsLoading(true);
+    try {
+      await updateUserProfile(user.uid, values);
+      setOriginalValues(values);
+      toast({
+        title: 'Profile Updated',
+        description: 'Your details have been saved successfully.',
+      });
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not save your profile. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleCancel = () => {
-    form.reset(originalValues);
+    if (originalValues) {
+      form.reset(originalValues);
+    }
     setIsEditing(false);
   };
+
+  if (isLoading && !originalValues) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
        <div className="flex flex-col items-center space-y-4">
         <div className="relative">
-          {userAvatar && (
             <Image
-              src={userAvatar.imageUrl}
-              alt={userAvatar.description}
-              data-ai-hint={userAvatar.imageHint}
+              src={user.photoURL || userAvatar?.imageUrl || ''}
+              alt={user.displayName || 'User Avatar'}
+              data-ai-hint={userAvatar?.imageHint}
               width={100}
               height={100}
               className="rounded-full border-4 border-primary/50 shadow-lg"
             />
-          )}
-          <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full" onClick={() => setIsEditing(true)} disabled={isEditing}>
+          <Button size="icon" variant="outline" className="absolute bottom-0 right-0 h-8 w-8 rounded-full" onClick={() => setIsEditing(true)} disabled={isEditing || isLoading}>
             <Edit className="h-4 w-4"/>
           </Button>
         </div>
@@ -142,7 +192,7 @@ const Profile = () => {
                       <FormLabel>Gender</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         disabled={!isEditing}
                       >
                         <FormControl>
@@ -206,15 +256,15 @@ const Profile = () => {
               />
               {isEditing ? (
                   <div className="flex gap-2">
-                    <Button type="submit" className="w-full">
-                      Save Changes
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? <><Activity className="animate-spin mr-2"/> Saving...</> : 'Save Changes'}
                     </Button>
-                    <Button type="button" variant="outline" onClick={handleCancel} className="w-full">
+                    <Button type="button" variant="outline" onClick={handleCancel} className="w-full" disabled={isLoading}>
                       Cancel
                     </Button>
                   </div>
                 ) : (
-                  <Button type="button" onClick={() => setIsEditing(true)} className="w-full">
+                  <Button type="button" onClick={() => setIsEditing(true)} className="w-full" disabled={isLoading}>
                     Edit Profile
                   </Button>
                 )}
@@ -225,5 +275,34 @@ const Profile = () => {
     </div>
   );
 };
+
+const ProfileSkeleton = () => (
+   <div className="space-y-6">
+    <div className="flex flex-col items-center space-y-4">
+      <Skeleton className="h-[100px] w-[100px] rounded-full" />
+      <div className="text-center space-y-2">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+    </div>
+    <Card className='rounded-xl'>
+      <CardHeader>
+        <CardTitle>Your Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-10 w-full" /></div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Skeleton className="h-5 w-16" /><Skeleton className="h-10 w-full" /></div>
+            <div className="space-y-2"><Skeleton className="h-5 w-16" /><Skeleton className="h-10 w-full" /></div>
+        </div>
+        <div className="space-y-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-10 w-full" /></div>
+        <div className="space-y-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-10 w-full" /></div>
+        <div className="space-y-2"><Skeleton className="h-5 w-24" /><Skeleton className="h-10 w-full" /></div>
+        <Skeleton className="h-10 w-full mt-4" />
+      </CardContent>
+    </Card>
+  </div>
+);
+
 
 export default Profile;
