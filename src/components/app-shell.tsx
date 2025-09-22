@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -26,8 +26,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import Appointments from './appointments';
+import { useTranslation } from '@/context/i18n';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription' | 'appointments';
 
@@ -46,6 +51,8 @@ export default function AppShell({ user }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [medicalTabState, setMedicalTabState] = useState<MedicalTabState>({});
   const { toast } = useToast();
+  const { t, setLanguage } = useTranslation();
+
 
   const handleSetActiveTab = (tab: Tab, state?: MedicalTabState) => {
     if (tab === 'medical' && state) {
@@ -86,11 +93,11 @@ export default function AppShell({ user }: AppShellProps) {
   };
 
   const navItems = [
-    { id: 'home', icon: Home, label: 'Home' },
-    { id: 'consult', icon: Stethoscope, label: 'Consult' },
-    { id: 'appointments', icon: CalendarCheck, label: 'Appointments' },
-    { id: 'records', icon: ClipboardList, label: 'Records' },
-    { id: 'profile', icon: UserIcon, label: 'Profile' },
+    { id: 'home', icon: Home, label: t('home') },
+    { id: 'consult', icon: Stethoscope, label: t('consult') },
+    { id: 'appointments', icon: CalendarCheck, label: t('appointments') },
+    { id: 'records', icon: ClipboardList, label: t('records') },
+    { id: 'profile', icon: UserIcon, label: t('profile') },
   ];
 
   return (
@@ -121,15 +128,29 @@ export default function AppShell({ user }: AppShellProps) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setActiveTab('profile')}>
                 <UserIcon className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+                <span>{t('profile')}</span>
               </DropdownMenuItem>
+               <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Globe className="mr-2 h-4 w-4" />
+                  <span>Language</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('hi')}>हिन्दी</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('pa')}>ਪੰਜਾਬੀ</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('log_out')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

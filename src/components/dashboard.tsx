@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { reminders } from '@/lib/dummy-data';
 import { getHealthNewsSummary } from '@/ai/flows/health-news-summaries';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/context/i18n';
+
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
@@ -34,6 +36,7 @@ const iconMap: { [key: string]: React.ElementType } = {
 const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
   const [newsSummary, setNewsSummary] = useState('');
   const [isLoadingNews, setIsLoadingNews] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -52,9 +55,9 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
   }, []);
 
   const quickAccessItems = [
-    { title: 'Symptom Checker', icon: Bot, tab: 'symptoms' },
-    { title: 'Book Consultation', icon: Stethoscope, tab: 'consult' },
-    { title: 'Scan Prescription', icon: ScanText, tab: 'prescription' },
+    { title: t('symptom_checker'), icon: Bot, tab: 'symptoms' },
+    { title: t('book_consultation'), icon: Stethoscope, tab: 'consult' },
+    { title: t('scan_prescription'), icon: ScanText, tab: 'prescription' },
   ];
 
   return (
@@ -84,8 +87,8 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
           >
             <Pill className="h-8 w-8 text-primary" />
             <div>
-              <p className="font-bold text-base">Nearby Medical</p>
-              <p className="text-sm text-muted-foreground">Order medicines</p>
+              <p className="font-bold text-base">{t('nearby_medical')}</p>
+              <p className="text-sm text-muted-foreground">{t('order_medicines')}</p>
             </div>
           </Button>
            <Button
@@ -95,8 +98,8 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
           >
             <ClipboardList className="h-8 w-8 text-primary" />
             <div>
-              <p className="font-bold text-base">Health Records</p>
-              <p className="text-sm text-muted-foreground">View your history</p>
+              <p className="font-bold text-base">{t('health_records')}</p>
+              <p className="text-sm text-muted-foreground">{t('view_your_history')}</p>
             </div>
           </Button>
       </div>
@@ -104,7 +107,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">
           <Bell className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg ml-2">Reminders</CardTitle>
+          <CardTitle className="text-lg ml-2">{t('reminders')}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 text-sm space-y-3">
           {reminders.map((reminder) => {
@@ -127,7 +130,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">
           <Newspaper className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg ml-2">Health News</CardTitle>
+          <CardTitle className="text-lg ml-2">{t('health_news')}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 text-sm">
           {isLoadingNews ? (
