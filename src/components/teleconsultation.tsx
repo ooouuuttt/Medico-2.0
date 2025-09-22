@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import * as LucideIcons from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { specialties } from '@/lib/dummy-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -374,4 +374,5 @@ const Teleconsultation = () => {
 
 export default Teleconsultation;
 
+    
     
