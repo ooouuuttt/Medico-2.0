@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 
 export type Consultation = {
@@ -37,8 +38,6 @@ export type Doctor = {
     name: string;
     specialty: string;
     experience: number;
-    availability: 'Available Today' | 'Available Tomorrow';
-    availabilitySlots: { date: string, slots: string[] }[]
 }
 
 const today = new Date();
@@ -46,65 +45,6 @@ const tomorrow = new Date(today);
 tomorrow.setDate(tomorrow.getDate() + 1);
 const dayAfter = new Date(today);
 dayAfter.setDate(dayAfter.getDate() + 2);
-
-export const doctors: Doctor[] = [
-    { 
-      id: 'd1', name: 'Anjali Sharma', specialty: 'General Physician', experience: 10, availability: 'Available Today',
-      availabilitySlots: [
-        { date: today.toISOString().split('T')[0], slots: ['10:00 AM', '10:30 AM', '11:00 AM', '02:00 PM', '02:30 PM'] },
-        { date: tomorrow.toISOString().split('T')[0], slots: ['09:00 AM', '09:30 AM', '11:30 AM'] },
-      ]
-    },
-    { 
-      id: 'd2', name: 'Rajesh Gupta', specialty: 'General Physician', experience: 15, availability: 'Available Tomorrow',
-      availabilitySlots: [
-        { date: tomorrow.toISOString().split('T')[0], slots: ['10:00 AM', '10:30 AM', '03:00 PM', '03:30 PM'] },
-        { date: dayAfter.toISOString().split('T')[0], slots: ['09:00 AM', '09:30 AM', '11:30 AM'] },
-      ]
-    },
-    { 
-      id: 'd3', name: 'Rohan Mehra', specialty: 'Pediatrics', experience: 8, availability: 'Available Today',
-      availabilitySlots: [
-        { date: today.toISOString().split('T')[0], slots: ['11:00 AM', '11:30 AM', '12:00 PM'] },
-        { date: dayAfter.toISOString().split('T')[0], slots: ['02:00 PM', '02:30 PM'] },
-      ]
-    },
-    { 
-      id: 'd4', name: 'Priya Singh', specialty: 'Gynecology', experience: 12, availability: 'Available Today',
-      availabilitySlots: [
-         { date: today.toISOString().split('T')[0], slots: ['10:00 AM', '10:30 AM', '11:00 AM'] },
-         { date: tomorrow.toISOString().split('T')[0], slots: ['02:00 PM', '02:30 PM', '03:00 PM'] },
-      ]
-    },
-    { 
-      id: 'd5', name: 'Sunita Patil', specialty: 'Gynecology', experience: 20, availability: 'Available Tomorrow',
-      availabilitySlots: [
-        { date: tomorrow.toISOString().split('T')[0], slots: ['11:00 AM', '11:30 AM'] },
-        { date: dayAfter.toISOString().split('T')[0], slots: ['10:00 AM', '10:30 AM', '11:00 AM'] },
-      ]
-    },
-    { 
-      id: 'd6', name: 'Vikram Rathod', specialty: 'Dermatology', experience: 7, availability: 'Available Today',
-      availabilitySlots: [
-        { date: today.toISOString().split('T')[0], slots: ['04:00 PM', '04:30 PM'] },
-        { date: tomorrow.toISOString().split('T')[0], slots: ['04:00 PM', '04:30 PM'] },
-      ]
-    },
-    { 
-      id: 'd7', name: 'Sanjay Verma', specialty: 'Orthopedics', experience: 18, availability: 'Available Tomorrow',
-      availabilitySlots: [
-        { date: tomorrow.toISOString().split('T')[0], slots: ['12:00 PM', '12:30 PM'] },
-        { date: dayAfter.toISOString().split('T')[0], slots: ['11:00 AM', '11:30 AM'] },
-      ]
-    },
-    { 
-      id: 'd8', name: 'Amit Desai', specialty: 'Cardiology', experience: 22, availability: 'Available Today',
-      availabilitySlots: [
-         { date: today.toISOString().split('T')[0], slots: ['09:00 AM', '09:30 AM'] },
-         { date: dayAfter.toISOString().split('T')[0], slots: ['09:00 AM', '09:30 AM'] },
-      ]
-    },
-]
 
 export const consultations: Consultation[] = [
   { id: 'c1', doctor: 'Dr. Anjali Sharma', specialty: 'General Physician', date: '2024-07-15' },
@@ -215,3 +155,5 @@ export const vitalsData = {
   bloodPressure: generateBloodPressure(7),
   temperature: generateVitals(7, 97, 100),
 }
+
+    
