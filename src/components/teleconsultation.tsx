@@ -92,11 +92,19 @@ const Teleconsultation = () => {
   }
 
   const handlePayment = () => {
-    setStep('consulting');
+    // In a real app, you'd save the appointment to the database here.
+    console.log('Appointment booked with:', {
+      doctorId: selectedDoctor?.id,
+      type: consultationType,
+      date: selectedDate,
+      time: selectedTime,
+    });
+    setStep('confirmation');
   };
 
   const handleEndConsultation = () => {
-    setStep('confirmation');
+    // This is now less relevant as we book appointments, but can be used for ended calls.
+    setStep('specialty');
   }
 
   const handleReset = () => {
@@ -113,7 +121,7 @@ const Teleconsultation = () => {
     : allDoctors;
 
   const doctorAvatar = (doctor: Doctor) =>
-    doctor.avatar || PlaceHolderImages.find((img) => img.id === `doctor-avatar-${doctor.id}`)?.imageUrl || `https://picsum.photos/seed/${doctor.id}/80/80`;
+    doctor.avatar || `https://picsum.photos/seed/${doctor.id}/80/80`;
 
   const today = new Date();
   // Using dummy availability for now
@@ -121,12 +129,13 @@ const Teleconsultation = () => {
 
 
   if (step === 'consulting' && selectedDoctor && consultationType) {
-    // The Doctor type for consultation components is different, so we adapt it.
+    // This step is no longer the direct outcome of booking. 
+    // It would be initiated from the "Appointments" page.
     const dummyDoctorForConsult = {
         id: selectedDoctor.id,
         name: selectedDoctor.name,
         specialty: selectedDoctor.specialization,
-        experience: 0, // Not available in new schema
+        experience: 0,
     };
     switch (consultationType) {
       case 'video':
@@ -146,21 +155,20 @@ const Teleconsultation = () => {
     return (
       <div className="flex flex-col items-center justify-center text-center h-full space-y-4 p-4 animate-in fade-in duration-500">
         <LucideIcons.CheckCircle2 className="h-16 w-16 text-green-500" />
-        <h2 className="text-2xl font-bold font-headline">Consultation Ended</h2>
+        <h2 className="text-2xl font-bold font-headline">Appointment Scheduled!</h2>
         <p className="text-muted-foreground">
-          Your {consultationType} consultation with{' '}
-          <strong>{selectedDoctor?.name}</strong> has ended.
+          Your {consultationType} appointment with{' '}
+          <strong>{selectedDoctor?.name}</strong> for{' '}
+          <strong>{selectedDate && format(selectedDate, 'dd MMM yyyy')} at {selectedTime}</strong> has been successfully booked.
         </p>
         <p className="text-sm text-muted-foreground">
-          We hope you found it helpful.
+          You can track your appointment in the "Appointments" section.
         </p>
         <Button
           onClick={handleReset}
-          variant="outline"
           className="mt-4"
         >
-          <LucideIcons.ArrowLeft className="mr-2 h-4 w-4" />
-          Book another consultation
+          Book another appointment
         </Button>
       </div>
     );
@@ -174,9 +182,9 @@ const Teleconsultation = () => {
           Back to time selection
         </Button>
         <Card className="rounded-xl shadow-lg">
-          <CardHeader>
-            <CardTitle>Confirm & Pay</CardTitle>
-          </CardHeader>
+           <CardHeader>
+             <CardTitle>Confirm & Pay</CardTitle>
+           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
               {selectedDoctor && (
@@ -306,7 +314,7 @@ const Teleconsultation = () => {
               <Card key={doctor.id} className="rounded-xl shadow-sm overflow-hidden">
                 <CardContent className="p-4 flex gap-4">
                     <Image
-                      src={doctor.avatar || `https://picsum.photos/seed/${doctor.id}/80/80`}
+                      src={doctor.avatar}
                       alt={doctor.name}
                       width={80}
                       height={80}

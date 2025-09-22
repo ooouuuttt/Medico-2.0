@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -27,8 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import Appointments from './appointments';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription' | 'appointments';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
@@ -71,6 +72,8 @@ export default function AppShell({ user }: AppShellProps) {
         return <Teleconsultation />;
       case 'records':
         return <HealthRecords />;
+      case 'appointments':
+        return <Appointments />;
       case 'medical':
         return <Medical initialState={medicalTabState} />;
       case 'prescription':
@@ -85,6 +88,7 @@ export default function AppShell({ user }: AppShellProps) {
   const navItems = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'consult', icon: Stethoscope, label: 'Consult' },
+    { id: 'appointments', icon: CalendarCheck, label: 'Appointments' },
     { id: 'records', icon: ClipboardList, label: 'Records' },
     { id: 'profile', icon: UserIcon, label: 'Profile' },
   ];
