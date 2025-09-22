@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,6 +21,7 @@ import { collection, onSnapshot, query, DocumentData, addDoc, serverTimestamp } 
 import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { getPatientName } from '@/lib/user-service';
 
 interface Doctor extends DocumentData {
   id: string;
@@ -108,6 +110,8 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
     }
 
     try {
+        const patientName = await getPatientName(user.uid);
+
         const appointmentDate = new Date(selectedDate);
         const [time, period] = selectedTime.split(' ');
         let [hours, minutes] = time.split(':').map(Number);
@@ -122,7 +126,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 
         await addDoc(collection(db, "appointments"), {
             patientId: user.uid,
-            patientName: user.displayName || 'Unknown',
+            patientName: patientName || user.displayName || 'Unknown',
             doctorId: selectedDoctor.id,
             doctorName: selectedDoctor.name,
             specialty: selectedDoctor.specialization,
@@ -419,5 +423,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 };
 
 export default Teleconsultation;
+
+    
 
     
