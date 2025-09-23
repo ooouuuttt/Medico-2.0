@@ -71,7 +71,7 @@ const HealthRecords = () => {
           <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="vitals" className="space-y-4">
+        <TabsContent value="vitals" className="space-y-4 mt-4">
             <Card className="shadow-sm rounded-xl">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2"><HeartPulse className="text-primary"/>Heart Rate</CardTitle>
@@ -81,9 +81,9 @@ const HealthRecords = () => {
                 <ChartContainer config={{
                   heartRate: { label: "Heart Rate", color: "hsl(var(--primary))" },
                 }} className="h-[150px] w-full">
-                  <AreaChart data={vitalsData.heartRate}>
+                  <AreaChart data={vitalsData.heartRate} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid vertical={false} />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12}/>
                     <YAxis hide/>
                     <Tooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
                     <Area dataKey="value" type="natural" fill="hsl(var(--primary))" fillOpacity={0.4} stroke="hsl(var(--primary))" />
@@ -95,15 +95,15 @@ const HealthRecords = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2"><Droplets className="text-primary"/>Blood Pressure</CardTitle>
                  <CardDescription>Last 7 days</CardDescription>
-              </header>
+              </CardHeader>
               <CardContent>
                   <ChartContainer config={{
                     systolic: { label: "Systolic", color: "hsl(var(--primary))" },
                     diastolic: { label: "Diastolic", color: "hsl(var(--accent))" },
                   }} className="h-[150px] w-full">
-                  <AreaChart data={vitalsData.bloodPressure}>
+                  <AreaChart data={vitalsData.bloodPressure} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid vertical={false} />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
                     <YAxis hide/>
                     <Tooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
                     <Area dataKey="systolic" type="natural" fill="hsl(var(--primary))" fillOpacity={0.4} stroke="hsl(var(--primary))" stackId="a" />
@@ -114,13 +114,13 @@ const HealthRecords = () => {
             </Card>
         </TabsContent>
 
-        <TabsContent value="consultations" className="space-y-4">
+        <TabsContent value="consultations" className="space-y-4 mt-4">
             <Accordion type="single" collapsible className="w-full space-y-4">
                 {consultations.map((consultation) => (
                     <AccordionItem key={consultation.id} value={consultation.id} className="border-none">
                         <Card className="shadow-sm rounded-xl overflow-hidden">
                             <AccordionTrigger className="p-4 hover:no-underline">
-                                <CardHeader className="p-0 text-left">
+                                <CardHeader className="p-0 text-left w-full">
                                     <CardTitle className="text-lg flex items-center gap-2">
                                         <Stethoscope className="text-primary" />
                                         <span>{consultation.specialty}</span>
@@ -131,9 +131,8 @@ const HealthRecords = () => {
                                     </CardDescription>
                                 </CardHeader>
                             </AccordionTrigger>
-                            <AccordionContent>
-                                <CardContent className="text-sm space-y-4 pt-0">
-                                    <Separator />
+                            <AccordionContent className="p-4 pt-0">
+                                <div className="text-sm space-y-4 pt-4 border-t">
                                      <p>
                                         <strong>Doctor:</strong> {consultation.doctor}
                                     </p>
@@ -144,7 +143,7 @@ const HealthRecords = () => {
                                         </div>
                                     )}
                                      <Button size="sm" variant="outline" className='w-full'>View Full Report</Button>
-                                </CardContent>
+                                </div>
                             </AccordionContent>
                         </Card>
                     </AccordionItem>
@@ -152,8 +151,7 @@ const HealthRecords = () => {
             </Accordion>
         </TabsContent>
 
-
-        <TabsContent value="prescriptions" className="space-y-4">
+        <TabsContent value="prescriptions" className="space-y-4 mt-4">
           {prescriptions.map((prescription) => (
             <Card key={prescription.id} className="shadow-sm rounded-xl">
               <CardHeader>
@@ -161,7 +159,7 @@ const HealthRecords = () => {
                   <FileText className="text-primary" />
                   <span>{prescription.medicine}</span>
                 </CardTitle>
-                <p className="text-sm font-normal text-muted-foreground">{prescription.dosage}</p>
+                <CardDescription className="pt-1">{prescription.dosage}</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
@@ -183,7 +181,7 @@ const HealthRecords = () => {
           ))}
         </TabsContent>
 
-        <TabsContent value="documents" className="space-y-4">
+        <TabsContent value="documents" className="space-y-4 mt-4">
             <Card {...getRootProps()} className="border-2 border-dashed rounded-xl text-center flex flex-col justify-center items-center h-32 cursor-pointer hover:border-primary/80 hover:bg-primary/5 transition-colors">
                 <input {...getInputProps()} />
                 <Upload className="h-8 w-8 text-muted-foreground"/>
