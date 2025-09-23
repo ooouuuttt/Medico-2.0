@@ -7,6 +7,7 @@ export type Consultation = {
   specialty: string;
   date: string;
   notes?: string;
+  summary?: string;
 };
 
 export type Prescription = {
@@ -47,9 +48,15 @@ const dayAfter = new Date(today);
 dayAfter.setDate(dayAfter.getDate() + 2);
 
 export const consultations: Consultation[] = [
-  { id: 'c1', doctor: 'Dr. Anjali Sharma', specialty: 'General Physician', date: '2024-07-15' },
-  { id: 'c2', doctor: 'Dr. Rohan Mehra', specialty: 'Pediatrics', date: '2024-06-20' },
-  { id: 'c3', doctor: 'Dr. Priya Singh', specialty: 'Gynecology', date: '2024-05-10' },
+  { 
+    id: 'c1', 
+    doctor: 'Dr. Anjali Sharma', 
+    specialty: 'General Physician', 
+    date: '2024-07-15',
+    summary: 'Patient reported symptoms of a common cold. Advised rest, hydration, and over-the-counter medication. Follow-up if symptoms persist for more than a week. No signs of bacterial infection were observed.'
+  },
+  { id: 'c2', doctor: 'Dr. Rohan Mehra', specialty: 'Pediatrics', date: '2024-06-20', summary: 'Routine check-up for the child. Growth and development are on track. Discussed vaccination schedule and nutrition. No immediate concerns.' },
+  { id: 'c3', doctor: 'Dr. Priya Singh', specialty: 'Gynecology', date: '2024-05-10', summary: 'Patient presented with minor hormonal imbalances. Prescribed supplements and recommended lifestyle changes. Scheduled a follow-up in 3 months.' },
 ];
 
 export const prescriptions: Prescription[] = [
@@ -115,6 +122,13 @@ export const reminders = [
   { id: 'r3', title: 'Child Vaccination - Polio', time: '2024-08-05', type: 'vaccine' },
 ];
 
+export const notifications = [
+    { id: 'n1', type: 'appointment', title: 'Appointment Confirmed', time: 'Today, 9:30 AM', description: 'Your appointment with Dr. Sharma for tomorrow is confirmed.' },
+    { id: 'n2', type: 'medicine', title: 'Prescription Ready', time: 'Yesterday, 5:00 PM', description: 'Your prescription is ready for pickup at Apollo Pharmacy.' },
+    { id: 'n3', type: 'trends', title: 'AI Health Insight', time: '2 days ago', description: 'Your blood pressure has been trending slightly high. Consider reducing salt intake.' },
+    { id: 'n4', type: 'alert', title: 'Medication Refill', time: '3 days ago', description: 'Your Folic Acid prescription is due for a refill soon.' },
+];
+
 export const specialties = [
     { name: 'General Physician', icon: 'Stethoscope' },
     { name: 'Pediatrics', icon: 'Baby' },
@@ -155,5 +169,3 @@ export const vitalsData = {
   bloodPressure: generateBloodPressure(7),
   temperature: generateVitals(7, 97, 100),
 }
-
-    

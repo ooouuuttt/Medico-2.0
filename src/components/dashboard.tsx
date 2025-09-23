@@ -6,22 +6,24 @@ import { useState, useEffect } from 'react';
 import {
   Bot,
   Stethoscope,
-  ClipboardList,
   Pill,
-  Bell,
   Newspaper,
   Calendar,
   AlertTriangle,
-  ScanText
+  ScanText,
+  Bell,
+  BarChart3,
+  HeartPulse,
 } from 'lucide-react';
 import type { Tab } from '@/components/app-shell';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { reminders } from '@/lib/dummy-data';
+import { notifications, reminders } from '@/lib/dummy-data';
 import { getHealthNewsSummary } from '@/ai/flows/health-news-summaries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/context/i18n';
-
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
@@ -30,7 +32,9 @@ interface DashboardProps {
 const iconMap: { [key: string]: React.ElementType } = {
   appointment: Calendar,
   medicine: Pill,
-  vaccine: AlertTriangle,
+  alert: AlertTriangle,
+  news: Newspaper,
+  trends: BarChart3,
 };
 
 const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
@@ -58,11 +62,12 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
     { title: t('symptom_checker'), icon: Bot, tab: 'symptoms' },
     { title: t('book_consultation'), icon: Stethoscope, tab: 'consult' },
     { title: t('scan_prescription'), icon: ScanText, tab: 'prescription' },
+    { title: t('order_medicines'), icon: Pill, tab: 'medical' },
   ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="grid grid-cols-3 gap-3 text-center">
+      <div className="grid grid-cols-2 gap-3 text-center">
         {quickAccessItems.map((item) => (
           <div key={item.title}>
             <Button
@@ -79,53 +84,49 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         ))}
       </div>
 
-       <div className="grid grid-cols-1 gap-3">
-         <Button
-            variant="outline"
-            className="w-full justify-center p-4 h-auto bg-card rounded-xl shadow-sm flex flex-col items-center gap-2 text-center"
-            onClick={() => setActiveTab('medical')}
-          >
-            <Pill className="h-8 w-8 text-primary" />
-            <div>
-              <p className="font-bold text-base">{t('nearby_medical')}</p>
-              <p className="text-sm text-muted-foreground">{t('order_medicines')}</p>
-            </div>
-          </Button>
-           <Button
-            variant="outline"
-            className="w-full justify-center p-4 h-auto bg-card rounded-xl shadow-sm flex flex-col items-center gap-2 text-center"
-            onClick={() => setActiveTab('records')}
-          >
-            <ClipboardList className="h-8 w-8 text-primary" />
-            <div>
-              <p className="font-bold text-base">{t('health_records')}</p>
-              <p className="text-sm text-muted-foreground">{t('view_your_history')}</p>
-            </div>
-          </Button>
-      </div>
-
-      <Card className="shadow-lg rounded-xl overflow-hidden">
+       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">
           <Bell className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg ml-2">{t('reminders')}</CardTitle>
+          <CardTitle className="text-lg ml-2">Notifications</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 text-sm space-y-3">
-          {reminders.map((reminder) => {
-            const Icon = iconMap[reminder.type] || Bell;
+        <CardContent className="p-0 text-sm">
+          <div className='max-h-48 overflow-y-auto'>
+          {notifications.map((notification, index) => {
+            const Icon = iconMap[notification.type] || Bell;
             return (
-              <div key={reminder.id} className="flex items-center gap-3">
-                <div className="bg-secondary p-2 rounded-full">
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold">{reminder.title}</p>
-                  <p className="text-muted-foreground">{reminder.time}</p>
-                </div>
+              <div key={notification.id} className="flex flex-col gap-2 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-secondary p-2 rounded-full mt-1">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{notification.title}</p>
+                      <p className="text-muted-foreground text-xs">{notification.time}</p>
+                      <p className='mt-1'>{notification.description}</p>
+                    </div>
+                  </div>
+                   {index < notifications.length - 1 && <Separator className="mt-2" />}
               </div>
             );
           })}
+          </div>
+        </CardContent>
+        <CardFooter className='p-2 bg-secondary/30'>
+            <Button variant="ghost" size="sm" className='w-full'>View All Notifications</Button>
+        </CardFooter>
+      </Card>
+      
+      <Card className="shadow-lg rounded-xl overflow-hidden">
+        <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">
+          <HeartPulse className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg ml-2">{t('health_records')}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+            <p className="text-muted-foreground text-sm mb-4">{t('view_your_history')}</p>
+            <Button className='w-full' onClick={() => setActiveTab('records')}>Go to Health Records</Button>
         </CardContent>
       </Card>
+
 
       <Card className="shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="flex flex-row items-center space-y-0 p-4 bg-primary/10">

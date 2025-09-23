@@ -1,13 +1,14 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from './ui/card';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import {
@@ -25,7 +26,6 @@ interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
 }
 
-
 const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
@@ -41,10 +41,8 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
         const medicineKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(initialState.medicineName!.toLowerCase()));
         if (medicineKey) {
             const medicineInfo = pharmacy.medicines[medicineKey];
-            if (medicineInfo.status === 'In Stock') {
-                handleSelectPharmacy(pharmacy);
-                handleSelectMedicine(medicineKey, medicineInfo.price, medicineInfo.quantity);
-            }
+            handleSelectPharmacy(pharmacy);
+            handleSelectMedicine(medicineKey, medicineInfo.price, medicineInfo.quantity);
         }
       }
     }
@@ -53,6 +51,7 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
     setSelectedMedicine(null);
+    setSearchTerm('');
     setView('pharmacy');
   };
 
@@ -89,14 +88,15 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
   const filteredPharmacies = searchTerm
     ? pharmacies.filter((pharmacy) =>
         Object.keys(pharmacy.medicines).some(
-          (med) => med.toLowerCase().includes(searchTerm.toLowerCase()) && pharmacy.medicines[med].status === 'In Stock'
+          (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
         )
       )
     : pharmacies;
-  
-  const availableMedicines = selectedPharmacy 
-    ? Object.entries(selectedPharmacy.medicines).filter(([, medInfo]) => medInfo.status === 'In Stock')
-    : [];
+
+  const getMedicineInfo = (pharmacy: Pharmacy, medName: string) => {
+    const medKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(medName.toLowerCase()));
+    return medKey ? pharmacy.medicines[medKey] : null;
+  }
 
   if (view === 'confirmation') {
     return (
@@ -108,7 +108,7 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
           <strong>{cartItem?.pharmacy?.name}</strong> has been placed.
         </p>
         <p className="text-sm text-muted-foreground">
-          It will be delivered to your address soon.
+          You will receive a notification when it's ready for collection.
         </p>
         <Button
           onClick={handleReset}
@@ -176,6 +176,7 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
   }
 
   if (view === 'pharmacy' && selectedPharmacy) {
+    const allMedicines = [...new Set(pharmacies.flatMap(p => Object.keys(p.medicines)))];
     return (
         <div className="animate-in fade-in duration-500">
              <Button variant="ghost" size="sm" onClick={() => { setView('list'); setSelectedPharmacy(null); }} className="mb-4">
@@ -185,55 +186,53 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
             <Card className="rounded-xl shadow-sm">
                 <CardHeader>
                     <CardTitle>{selectedPharmacy.name}</CardTitle>
-                    <div className="flex items-center text-sm text-muted-foreground pt-1">
+                    <CardDescription className="flex items-center text-sm pt-1">
                         <Building className="w-4 h-4 mr-2" />
-                        <span>{selectedPharmacy.address}</span>
-                    </div>
+                        <span>{selectedPharmacy.address}, {selectedPharmacy.distance}</span>
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <h4 className='font-semibold'>Available Medicines</h4>
-                    {availableMedicines.length > 0 ? (
-                      <div className="space-y-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between">
-                              <span className='capitalize'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                            {availableMedicines.map(([medicineName, medicineInfo]) => (
-                                <DropdownMenuItem key={medicineName} onClick={() => handleSelectMedicine(medicineName, medicineInfo.price, medicineInfo.quantity)}>
+                    <h4 className='font-semibold'>Check Medicine Availability</h4>
+                    <div className="space-y-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full justify-between">
+                            <span className='capitalize'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                          {allMedicines.map((medicineName) => {
+                              const medicineInfo = getMedicineInfo(selectedPharmacy, medicineName);
+                              return (
+                                <DropdownMenuItem key={medicineName} onClick={() => medicineInfo && handleSelectMedicine(medicineName, medicineInfo.price, medicineInfo.quantity)}>
                                     <span className='capitalize'>{medicineName}</span>
                                 </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
-                        {selectedMedicine && (
-                          <div className="border-t pt-4 space-y-4">
-                              <div className="flex justify-between items-center">
-                                  <div>
-                                      <p className="font-medium capitalize">{selectedMedicine.name}</p>
-                                      <p className="text-sm text-muted-foreground">₹{selectedMedicine.price} | Qty: {selectedMedicine.quantity}</p>
-                                  </div>
-                                  <Button size="sm" onClick={handleOrder}>
-                                      <ShoppingCart className="h-4 w-4 mr-2" />
-                                      Order
-                                  </Button>
-                              </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center pt-4">No medicines currently available.</p>
-                    )}
+                      {selectedMedicine && (
+                        <div className="border-t pt-4 space-y-4 animate-in fade-in duration-300">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <p className="font-medium capitalize">{selectedMedicine.name}</p>
+                                    <p className="text-sm text-muted-foreground">Price: ₹{selectedMedicine.price} | In Stock: {selectedMedicine.quantity}</p>
+                                </div>
+                                <Button size="sm" onClick={handleOrder}>
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    Order
+                                </Button>
+                            </div>
+                        </div>
+                      )}
+                    </div>
                 </CardContent>
             </Card>
         </div>
     )
   }
-
 
   return (
     <div className="space-y-4">
@@ -250,30 +249,38 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
 
       <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
-          filteredPharmacies.map((pharmacy) => (
-            <Card key={pharmacy.id} className="rounded-xl shadow-sm">
-                <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                        <h3 className="font-semibold">{pharmacy.name}</h3>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                            <MapPin className="w-3.5 h-3.5 mr-1" />
-                            <span>{pharmacy.distance}</span>
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Building className="w-3 h-3 mr-1.5" />
-                            <span>{pharmacy.address}</span>
-                        </div>
-                    </div>
-                    <Button variant="outline" size="icon" onClick={() => handleSelectPharmacy(pharmacy)}>
-                        <ShoppingCart className="h-5 w-5" />
-                        <span className="sr-only">Shop at {pharmacy.name}</span>
-                    </Button>
-                </CardContent>
-            </Card>
-          ))
+          filteredPharmacies.map((pharmacy) => {
+            const medInfo = searchTerm ? getMedicineInfo(pharmacy, searchTerm) : null;
+            return (
+              <Card key={pharmacy.id} className="rounded-xl shadow-sm cursor-pointer" onClick={() => handleSelectPharmacy(pharmacy)}>
+                  <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                          <h3 className="font-semibold">{pharmacy.name}</h3>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5 mr-1" />
+                              <span>{pharmacy.distance}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground mt-1">
+                              <Building className="w-3 h-3 mr-1.5" />
+                              <span>{pharmacy.address}</span>
+                          </div>
+                      </div>
+                      {searchTerm && medInfo && (
+                         <div className='text-right'>
+                            <Badge variant={medInfo.status === 'In Stock' ? 'default' : 'destructive'} className='bg-green-100 text-green-800'>
+                                {medInfo.status === 'In Stock' ? <CheckCircle className='w-3 h-3 mr-1.5'/> : <XCircle className='w-3 h-3 mr-1.5'/>}
+                                {medInfo.status}
+                            </Badge>
+                            <p className='text-sm font-semibold mt-1'>₹{medInfo.price}</p>
+                         </div>
+                      )}
+                  </CardContent>
+              </Card>
+            )
+          })
         ) : (
           <p className="text-center text-muted-foreground p-4">
-            {searchTerm ? 'No pharmacies found with this medicine.' : 'No pharmacies found.'}
+            {searchTerm ? 'No pharmacies found with this medicine.' : 'Search to see pharmacy stock.'}
           </p>
         )}
       </div>

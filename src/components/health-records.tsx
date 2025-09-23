@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +13,8 @@ import {
   HeartPulse,
   Droplets,
   Thermometer,
-  LineChart
+  LineChart,
+  Bot
 } from 'lucide-react';
 import {
   Tabs,
@@ -28,12 +30,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 import { consultations, prescriptions, documents, vitalsData } from '@/lib/dummy-data';
 import { Button } from './ui/button';
 import { useDropzone } from 'react-dropzone';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltipContent } from './ui/chart';
 import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 
 const HealthRecords = () => {
   const [myFiles, setMyFiles] = useState<File[]>([]);
@@ -86,7 +95,7 @@ const HealthRecords = () => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2"><Droplets className="text-primary"/>Blood Pressure</CardTitle>
                  <CardDescription>Last 7 days</CardDescription>
-              </CardHeader>
+              </header>
               <CardContent>
                   <ChartContainer config={{
                     systolic: { label: "Systolic", color: "hsl(var(--primary))" },
@@ -106,26 +115,43 @@ const HealthRecords = () => {
         </TabsContent>
 
         <TabsContent value="consultations" className="space-y-4">
-          {consultations.map((consultation) => (
-            <Card key={consultation.id} className="shadow-sm rounded-xl">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Stethoscope className="text-primary" />
-                  <span>{consultation.specialty}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
-                <p>
-                  <strong>Doctor:</strong> {consultation.doctor}
-                </p>
-                <div className="flex items-center gap-2 pt-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(consultation.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            <Accordion type="single" collapsible className="w-full space-y-4">
+                {consultations.map((consultation) => (
+                    <AccordionItem key={consultation.id} value={consultation.id} className="border-none">
+                        <Card className="shadow-sm rounded-xl overflow-hidden">
+                            <AccordionTrigger className="p-4 hover:no-underline">
+                                <CardHeader className="p-0 text-left">
+                                    <CardTitle className="text-lg flex items-center gap-2">
+                                        <Stethoscope className="text-primary" />
+                                        <span>{consultation.specialty}</span>
+                                    </CardTitle>
+                                     <CardDescription className="flex items-center gap-2 pt-2 text-xs">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>{new Date(consultation.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    </CardDescription>
+                                </CardHeader>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <CardContent className="text-sm space-y-4 pt-0">
+                                    <Separator />
+                                     <p>
+                                        <strong>Doctor:</strong> {consultation.doctor}
+                                    </p>
+                                    {consultation.summary && (
+                                        <div className="bg-primary/5 p-3 rounded-lg space-y-2 border border-primary/20">
+                                            <h4 className="font-semibold flex items-center gap-2 text-primary"><Bot className="w-5 h-5"/> AI Summary</h4>
+                                            <p className="text-muted-foreground text-xs leading-relaxed">{consultation.summary}</p>
+                                        </div>
+                                    )}
+                                     <Button size="sm" variant="outline" className='w-full'>View Full Report</Button>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                ))}
+            </Accordion>
         </TabsContent>
+
 
         <TabsContent value="prescriptions" className="space-y-4">
           {prescriptions.map((prescription) => (

@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import * as LucideIcons from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { specialties } from '@/lib/dummy-data';
@@ -29,6 +28,7 @@ interface Doctor extends DocumentData {
   specialization: string;
   bio: string;
   avatar?: string;
+  consultationTypes: Array<'video' | 'audio' | 'chat'>;
 }
 
 interface TeleconsultationProps {
@@ -169,6 +169,11 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
   const today = new Date();
   const availableSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM'];
 
+  const consultTypeIcons = {
+    video: LucideIcons.Video,
+    audio: LucideIcons.Phone,
+    chat: LucideIcons.MessageSquare,
+  };
 
   if (step === 'consulting' && selectedDoctor && consultationType) {
     // This step is no longer the direct outcome of booking. 
@@ -204,7 +209,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
           <strong>{selectedDate && format(selectedDate, 'dd MMM yyyy')} at {selectedTime}</strong> has been successfully booked.
         </p>
         <p className="text-sm text-muted-foreground">
-          You can track your appointment in the "Appointments" section.
+          You can track your appointment in the "Appointments" section. You will receive a notification upon confirmation.
         </p>
         <Button
           onClick={handleReset}
@@ -347,6 +352,10 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
                            <Skeleton className="h-5 w-3/4" />
                            <Skeleton className="h-4 w-1/2" />
                            <Skeleton className="h-4 w-1/3" />
+                           <div className="flex gap-2 mt-2">
+                               <Skeleton className="h-8 w-16" />
+                               <Skeleton className="h-8 w-16" />
+                           </div>
                         </div>
                      </CardContent>
                 </Card>
@@ -354,33 +363,39 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
           ) : doctorsForSpecialty.length > 0 ? (
             doctorsForSpecialty.map((doctor) => (
               <Card key={doctor.id} className="rounded-xl shadow-sm overflow-hidden">
-                <CardContent className="p-4 flex gap-4">
-                    <Image
-                      src={doctor.avatar}
-                      alt={doctor.name}
-                      width={80}
-                      height={80}
-                      className="rounded-lg object-cover"
-                    />
-                  <div className="flex-grow">
-                    <h3 className="font-bold">{doctor.name}</h3>
-                    <p className="text-sm text-muted-foreground">{doctor.bio}</p>
-                    <Badge variant="secondary" className="mt-1">{doctor.specialization}</Badge>
-                    <div className="flex gap-2 mt-3">
-                        <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'video')}>
-                          <LucideIcons.Video className="h-4 w-4 mr-2" />
-                          Video
-                        </Button>
-                        <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'audio')}>
-                          <LucideIcons.Phone className="h-4 w-4 mr-2" />
-                          Audio
-                        </Button>
-                        <Button size="sm" variant="outline" className='h-auto' onClick={() => handleSelectDoctor(doctor, 'chat')}>
-                          <LucideIcons.MessageSquare className="h-4 w-4 mr-2" />
-                          Chat
-                        </Button>
+                <CardHeader className="p-4">
+                   <div className="flex gap-4">
+                     <Image
+                        src={doctor.avatar}
+                        alt={doctor.name}
+                        width={80}
+                        height={80}
+                        className="rounded-lg object-cover"
+                      />
+                    <div className="flex-grow">
+                      <CardTitle className="text-xl">{doctor.name}</CardTitle>
+                      <CardDescription>{doctor.specialization}</CardDescription>
+                       <Badge variant="secondary" className="mt-2">10+ years experience</Badge>
                     </div>
                   </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                   <p className="text-sm text-muted-foreground">{doctor.bio}</p>
+                   <Separator />
+                   <div className="space-y-2">
+                       <h4 className="text-sm font-semibold">Book Appointment</h4>
+                        <div className="flex gap-2">
+                            {(doctor.consultationTypes || ['video', 'audio', 'chat']).map(type => {
+                                const Icon = consultTypeIcons[type];
+                                return (
+                                    <Button key={type} size="sm" variant="outline" className='h-auto flex-1' onClick={() => handleSelectDoctor(doctor, type)}>
+                                      <Icon className="h-4 w-4 mr-2" />
+                                      <span className='capitalize'>{type}</span>
+                                    </Button>
+                                )
+                            })}
+                        </div>
+                   </div>
                 </CardContent>
               </Card>
             ))
@@ -423,8 +438,3 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 };
 
 export default Teleconsultation;
-
-    
-
-    
-
