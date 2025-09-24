@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -145,6 +146,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
     const pastAppointments = appointments.filter(a => a.status !== 'upcoming');
     
     const formatDate = (timestamp: Timestamp) => {
+        if (!timestamp) return new Date();
         return timestamp.toDate();
     }
 
