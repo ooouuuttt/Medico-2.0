@@ -45,29 +45,38 @@ export const getPrescriptions = (
     orderBy('createdAt', 'desc')
   );
 
-  // This snapshot listener will now also trigger notifications for new e-prescriptions.
+  let isFirstLoad = true;
+  const notifiedPrescriptions = new Set<string>();
+
   const unsubscribe = onSnapshot(
     q,
-    async (querySnapshot) => {
-       const prescriptions: Prescription[] = [];
+    (querySnapshot) => {
+      const prescriptions: Prescription[] = [];
+      const newlyAdded: Prescription[] = [];
       
-      const qOld = query(collection(db, 'prescriptions'), where('patientId', '==', uid));
-      const oldSnapshot = await getDocs(qOld);
-      const oldIds = new Set(oldSnapshot.docs.map(d => d.id));
+      querySnapshot.forEach((doc) => {
+        const prescription = { id: doc.id, ...doc.data() } as Prescription;
+        prescriptions.push(prescription);
 
-      for (const doc of querySnapshot.docs) {
-        prescriptions.push({ id: doc.id, ...doc.data() } as Prescription);
-        // If the prescription is new, create a notification
-        if (!oldIds.has(doc.id)) {
-            const prescriptionData = doc.data() as Prescription;
-            await createNotification(uid, {
-                title: 'New E-Prescription Received',
-                description: `You have a new prescription from Dr. ${prescriptionData.doctorName}.`,
-                type: 'medicine'
-            });
+        if (!isFirstLoad && !notifiedPrescriptions.has(doc.id)) {
+            newlyAdded.push(prescription);
+            notifiedPrescriptions.add(doc.id);
         }
+      });
+      
+      // After first load, notify for newly added prescriptions
+      if (!isFirstLoad) {
+          newlyAdded.forEach(prescription => {
+              createNotification(uid, {
+                title: 'New E-Prescription Received',
+                description: `You have a new prescription from Dr. ${prescription.doctorName}.`,
+                type: 'medicine'
+              });
+          });
       }
+
       callback(prescriptions);
+      isFirstLoad = false;
     },
     (error) => {
       console.error('Error fetching prescriptions:', error);

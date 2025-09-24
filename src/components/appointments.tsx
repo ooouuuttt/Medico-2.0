@@ -56,7 +56,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
     const { toast } = useToast();
-    const prevAppointmentsRef = useRef<Appointment[]>([]);
+    const notifiedCancellations = useRef(new Set<string>());
 
 
     useEffect(() => {
@@ -75,25 +75,25 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const fetchedAppointments: Appointment[] = [];
             querySnapshot.forEach((doc) => {
-                fetchedAppointments.push({ id: doc.id, ...doc.data() } as Appointment);
-            });
-            
-            // Compare with previous state to detect changes
-            const prevAppointments = prevAppointmentsRef.current;
-            fetchedAppointments.forEach(newApt => {
-                const oldApt = prevAppointments.find(a => a.id === newApt.id);
-                if (oldApt && oldApt.status !== 'cancelled' && newApt.status === 'cancelled' && newApt.cancelledBy === 'doctor') {
-                     createNotification(user.uid, {
+                const appointment = { id: doc.id, ...doc.data() } as Appointment;
+                fetchedAppointments.push(appointment);
+
+                // Reliable check for doctor cancellations
+                if (
+                    appointment.status === 'cancelled' &&
+                    appointment.cancelledBy === 'doctor' &&
+                    !notifiedCancellations.current.has(appointment.id)
+                ) {
+                    createNotification(user.uid, {
                         title: 'Appointment Cancelled',
-                        description: `Dr. ${newApt.doctorName} cancelled your appointment. Reason: ${newApt.cancellationReason}`,
+                        description: `Dr. ${appointment.doctorName} cancelled your appointment. Reason: ${appointment.cancellationReason}`,
                         type: 'alert'
                     });
+                    notifiedCancellations.current.add(appointment.id);
                 }
             });
 
-
             setAppointments(fetchedAppointments);
-            prevAppointmentsRef.current = fetchedAppointments;
             setIsLoading(false);
         }, (error) => {
             console.error("Failed to fetch appointments:", error);
