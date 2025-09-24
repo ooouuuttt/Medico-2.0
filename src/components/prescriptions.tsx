@@ -3,18 +3,18 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { getPrescriptions, Prescription } from '@/lib/prescription-service';
+import { getPrescriptions, PastPrescription } from '@/lib/prescription-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import { FileText, Scan, ServerCrash } from 'lucide-react';
+import { FileText, Scan } from 'lucide-react';
 
 interface PrescriptionsProps {
   user: User;
 }
 
 const Prescriptions = ({ user }: PrescriptionsProps) => {
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [prescriptions, setPrescriptions] = useState<PastPrescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -72,21 +72,22 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
                   })}
                 </CardDescription>
               </div>
-              <Badge variant={prescription.source === 'scanned' ? 'secondary' : 'default'} className="capitalize">
-                 {prescription.source === 'scanned' ? <Scan className="w-3 h-3 mr-1.5"/> : null}
-                {prescription.source}
+               <Badge variant={prescription.id.startsWith('scan_') ? 'secondary' : 'default'} className="capitalize">
+                 {prescription.id.startsWith('scan_') ? <Scan className="w-3 h-3 mr-1.5"/> : null}
+                {prescription.id.startsWith('scan_') ? 'scanned' : 'e-prescription'}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {prescription.medicines.map((med, index) => (
+            {prescription.medications.map((med, index) => (
               <div key={index} className="border p-3 rounded-lg text-sm bg-background">
                 <p className="font-bold text-base capitalize">{med.name}</p>
                 <div className="grid grid-cols-3 gap-2 text-muted-foreground mt-2">
                     <div><Badge variant="outline" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
                     <div><Badge variant="outline" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
-                    <div><Badge variant="outline" className='w-full justify-center text-center'>{med.duration}</Badge></div>
+                    {med.duration && <div><Badge variant="outline" className='w-full justify-center text-center'>{med.duration}</Badge></div>}
                 </div>
+                 {med.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Notes: {med.notes}</p>}
               </div>
             ))}
           </CardContent>

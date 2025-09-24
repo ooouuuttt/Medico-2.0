@@ -16,7 +16,7 @@ interface Appointment extends DocumentData {
     doctorName: string;
     specialty: string;
     type: 'video' | 'audio' | 'chat';
-    date: string; // ISO string
+    date: Timestamp;
     status: 'upcoming' | 'completed' | 'cancelled';
 }
 
@@ -67,6 +67,10 @@ const Appointments = ({ user }: AppointmentsProps) => {
 
     const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
     const pastAppointments = appointments.filter(a => a.status !== 'upcoming');
+    
+    const formatDate = (timestamp: Timestamp) => {
+        return timestamp.toDate();
+    }
 
     if (isLoading) {
         return (
@@ -106,9 +110,9 @@ const Appointments = ({ user }: AppointmentsProps) => {
                                 <p className="font-bold">{apt.doctorName}</p>
                                 <p className="text-sm text-muted-foreground">{apt.specialty}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    {new Date(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    {formatDate(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     {' at '}
-                                    {new Date(apt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    {formatDate(apt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>
@@ -138,7 +142,7 @@ const Appointments = ({ user }: AppointmentsProps) => {
                                 <p className="font-bold">{apt.doctorName}</p>
                                 <p className="text-sm text-muted-foreground">{apt.specialty}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    {new Date(apt.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    {formatDate(apt.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
                                 </p>
                             </div>
                         </div>

@@ -16,7 +16,7 @@ import { Calendar } from './ui/calendar';
 import { add, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, DocumentData, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -131,9 +131,8 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
             doctorName: selectedDoctor.name,
             specialty: selectedDoctor.specialization,
             type: consultationType,
-            date: appointmentDate.toISOString(),
+            date: Timestamp.fromDate(appointmentDate),
             status: 'upcoming',
-            createdAt: serverTimestamp(),
         });
         setStep('confirmation');
     } catch (error) {

@@ -76,9 +76,9 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
         await saveScannedPrescription(user.uid, result);
         toast({
           title: "Prescription Saved",
-          description: "The prescription has been added to your records.",
+          description: "The prescription has been added to your health records.",
         });
-        setActiveTab('prescriptions');
+        setActiveTab('health-records');
       } catch (error) {
         console.error("Failed to save prescription:", error);
         toast({

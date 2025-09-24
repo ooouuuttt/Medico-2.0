@@ -29,7 +29,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Edit, Activity } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { getUserProfile, updateUserProfile } from '@/lib/user-service';
+import { getUserProfile, updateUserProfile, UserProfile } from '@/lib/user-service';
 import { Skeleton } from './ui/skeleton';
 
 const profileSchema = z.object({
@@ -41,10 +41,16 @@ const profileSchema = z.object({
   gender: z.string().nonempty('Please select a gender.'),
   contact: z.string().regex(/^\d{10}$/, 'Please enter a valid 10-digit contact number.'),
   village: z.string().min(2, 'Village name is required.'),
-  medicalHistory: z.string().optional(),
+  healthRecords: z.string().optional(),
+   vitals: z.object({
+    bloodPressure: z.string().optional(),
+    heartRate: z.string().optional(),
+    temperature: z.string().optional(),
+    respiratoryRate: z.string().optional(),
+  }).optional(),
 });
 
-type ProfileData = z.infer<typeof profileSchema>;
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
@@ -55,10 +61,10 @@ interface ProfileProps {
 const Profile = ({ user }: ProfileProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [originalValues, setOriginalValues] = useState<ProfileData | null>(null);
+  const [originalValues, setOriginalValues] = useState<Partial<UserProfile>>({});
   const { toast } = useToast();
   
-  const form = useForm<ProfileData>({
+  const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: '',
@@ -66,7 +72,13 @@ const Profile = ({ user }: ProfileProps) => {
       gender: '',
       contact: '',
       village: '',
-      medicalHistory: '',
+      healthRecords: '',
+      vitals: {
+        bloodPressure: '',
+        heartRate: '',
+        temperature: '',
+        respiratoryRate: '',
+      },
     },
   });
 
@@ -77,29 +89,25 @@ const Profile = ({ user }: ProfileProps) => {
       if (profileData) {
         form.reset(profileData);
         setOriginalValues(profileData);
-      } else {
-        // Pre-fill with some data if no profile exists
-        const defaultData = {
-          name: user.displayName || 'New User',
-          age: 30,
-          gender: 'other',
-          contact: '0000000000',
-          village: 'Unknown',
-          medicalHistory: '',
-        };
-        form.reset(defaultData);
-        setOriginalValues(defaultData);
       }
       setIsLoading(false);
     };
     fetchProfile();
   }, [user, form]);
 
-  async function onSubmit(values: ProfileData) {
+  async function onSubmit(values: ProfileFormData) {
     setIsLoading(true);
     try {
-      await updateUserProfile(user.uid, values);
-      setOriginalValues(values);
+      const updatedProfile: Partial<UserProfile> = {
+          ...originalValues,
+          ...values,
+          vitals: {
+            ...originalValues?.vitals,
+            ...values.vitals,
+          }
+      };
+      await updateUserProfile(user.uid, updatedProfile);
+      setOriginalValues(updatedProfile);
       toast({
         title: 'Profile Updated',
         description: 'Your details have been saved successfully.',
@@ -126,6 +134,9 @@ const Profile = ({ user }: ProfileProps) => {
   if (isLoading && !originalValues) {
     return <ProfileSkeleton />;
   }
+  
+  const watchedName = form.watch('name');
+  const watchedVillage = form.watch('village');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -144,8 +155,8 @@ const Profile = ({ user }: ProfileProps) => {
           </Button>
         </div>
         <div className="text-center">
-          <h2 className="text-2xl font-bold font-headline">{form.watch('name')}</h2>
-          <p className="text-muted-foreground">{form.watch('village')}</p>
+          <h2 className="text-2xl font-bold font-headline">{watchedName}</h2>
+          <p className="text-muted-foreground">{watchedVillage}</p>
         </div>
       </div>
 
@@ -178,7 +189,7 @@ const Profile = ({ user }: ProfileProps) => {
                     <FormItem>
                       <FormLabel>Age</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Your age" {...field} disabled={!isEditing}/>
+                        <Input type="number" placeholder="Your age" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} disabled={!isEditing}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -239,10 +250,10 @@ const Profile = ({ user }: ProfileProps) => {
               />
               <FormField
                 control={form.control}
-                name="medicalHistory"
+                name="healthRecords"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medical History (Optional)</FormLabel>
+                    <FormLabel>Medical History</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="e.g., allergies, chronic conditions"
@@ -254,8 +265,43 @@ const Profile = ({ user }: ProfileProps) => {
                   </FormItem>
                 )}
               />
+               {isEditing && (
+                 <>
+                    <CardTitle className="text-lg pt-4">Vitals</CardTitle>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField control={form.control} name="vitals.bloodPressure" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Blood Pressure</FormLabel>
+                            <FormControl><Input placeholder="e.g. 120/80 mmHg" {...field} disabled={!isEditing}/></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                       <FormField control={form.control} name="vitals.heartRate" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Heart Rate</FormLabel>
+                            <FormControl><Input placeholder="e.g. 72 bpm" {...field} disabled={!isEditing}/></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                       <FormField control={form.control} name="vitals.temperature" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Temperature</FormLabel>
+                            <FormControl><Input placeholder="e.g. 98.6°F" {...field} disabled={!isEditing}/></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                       <FormField control={form.control} name="vitals.respiratoryRate" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Respiratory Rate</FormLabel>
+                            <FormControl><Input placeholder="e.g. 16 breaths/min" {...field} disabled={!isEditing}/></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                </>
+              )}
               {isEditing ? (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-4">
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading ? <><Activity className="animate-spin mr-2"/> Saving...</> : 'Save Changes'}
                     </Button>

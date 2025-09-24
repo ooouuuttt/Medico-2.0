@@ -44,7 +44,7 @@ interface AppShellProps {
   user: User;
 }
 
-const languageNames = {
+const languageNames: {[key: string]: string} = {
   en: 'English',
   hi: 'हिन्दी',
   pa: 'ਪੰਜਾਬੀ',
@@ -81,7 +81,7 @@ export default function AppShell({ user }: AppShellProps) {
       case 'consult':
         return <Teleconsultation user={user} />;
       case 'records':
-        return <HealthRecords />;
+        return <HealthRecords user={user} />;
       case 'appointments':
         return <Appointments user={user} />;
       case 'medical':
