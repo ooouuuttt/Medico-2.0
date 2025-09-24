@@ -13,6 +13,9 @@ import jsPDF from 'jspdf';
 import type { Tab } from './app-shell';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { Separator } from './ui/separator';
+import { Medication } from '@/lib/user-service';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 
 interface PrescriptionsProps {
   user: User;
@@ -23,6 +26,7 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [selectedMedicines, setSelectedMedicines] = useState<Medication[]>([]);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -39,6 +43,14 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
 
     return () => unsubscribe();
   }, [user]);
+
+  useEffect(() => {
+    if (selectedPrescription) {
+      setSelectedMedicines(selectedPrescription.medications);
+    } else {
+      setSelectedMedicines([]);
+    }
+  }, [selectedPrescription]);
   
   const handleDownload = (prescription: Prescription) => {
     const doc = new jsPDF();
@@ -99,23 +111,40 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   };
   
   const handleFindPharmacies = () => {
-    if (!selectedPrescription) return;
-    const medicineNames = selectedPrescription.medications.map(med => med.name);
+    if (!selectedPrescription || selectedMedicines.length === 0) return;
+    const medicineNames = selectedMedicines.map(med => med.name);
     setActiveTab('medical', { medicinesToFind: medicineNames });
     setIsOrderDialogOpen(false);
   }
 
   const handleSendToPharmacy = () => {
-    if (!selectedPrescription) return;
+    if (!selectedPrescription || selectedMedicines.length === 0) return;
     setActiveTab('medical', { 
         prescriptionToSend: {
             doctorName: selectedPrescription.doctorName,
             date: new Date(selectedPrescription.createdAt.toDate()).toLocaleDateString(),
-            medications: selectedPrescription.medications,
+            medications: selectedMedicines,
         }
     });
     setIsOrderDialogOpen(false);
   }
+
+  const handleMedicineSelection = (medicine: Medication, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedMedicines(prev => [...prev, medicine]);
+    } else {
+      setSelectedMedicines(prev => prev.filter(m => m.name !== medicine.name));
+    }
+  };
+
+  const handleSelectAll = (isChecked: boolean) => {
+    if (isChecked) {
+        setSelectedMedicines(selectedPrescription?.medications || []);
+    } else {
+        setSelectedMedicines([]);
+    }
+  }
+
 
   if (isLoading) {
     return (
@@ -139,6 +168,9 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
         </div>
       )
   }
+
+  const allSelected = selectedPrescription ? selectedMedicines.length === selectedPrescription.medications.length : false;
+
 
   return (
     <>
@@ -201,28 +233,38 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
                 <DialogHeader>
                     <DialogTitle>Order Prescription</DialogTitle>
                     <DialogDescription>
-                        How would you like to order the medicines for this prescription from Dr. {selectedPrescription?.doctorName}?
+                        Select medicines to order from Dr. {selectedPrescription?.doctorName}'s prescription.
                     </DialogDescription>
                 </DialogHeader>
-                <div className='py-4 space-y-2'>
-                    <p className='text-sm font-semibold'>Medicines:</p>
-                    <ul className='text-sm text-muted-foreground list-disc list-inside'>
-                        {selectedPrescription?.medications.map(m => <li key={m.name} className='capitalize'>{m.name}</li>)}
-                    </ul>
+                <div className='py-4 space-y-3'>
+                    <div className="flex items-center space-x-2 pb-2 border-b">
+                        <Checkbox id="select-all" checked={allSelected} onCheckedChange={(checked) => handleSelectAll(Boolean(checked))} />
+                        <Label htmlFor="select-all" className='font-semibold'>Select All</Label>
+                    </div>
+                    {selectedPrescription?.medications.map(m => (
+                        <div key={m.name} className="flex items-center space-x-2">
+                            <Checkbox 
+                                id={m.name} 
+                                checked={selectedMedicines.some(sm => sm.name === m.name)}
+                                onCheckedChange={(checked) => handleMedicineSelection(m, Boolean(checked))}
+                            />
+                            <Label htmlFor={m.name} className='capitalize text-sm font-normal'>{m.name}</Label>
+                        </div>
+                    ))}
                 </div>
                 <Separator />
                 <div className='py-4 space-y-4'>
-                    <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleFindPharmacies}>
+                    <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleFindPharmacies} disabled={selectedMedicines.length === 0}>
                          <Search className="mr-4 h-5 w-5 text-primary" />
                          <div>
-                            <p className='font-semibold'>Find Pharmacies for All</p>
-                            <p className='text-xs text-muted-foreground text-left'>Search for pharmacies that stock all items.</p>
+                            <p className='font-semibold'>Find Pharmacies for Selected</p>
+                            <p className='text-xs text-muted-foreground text-left'>Search for pharmacies that stock all selected items.</p>
                          </div>
                     </Button>
-                     <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleSendToPharmacy}>
+                     <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleSendToPharmacy} disabled={selectedMedicines.length === 0}>
                          <Send className="mr-4 h-5 w-5 text-primary" />
                          <div>
-                            <p className='font-semibold'>Send Prescription to Pharmacy</p>
+                            <p className='font-semibold'>Send Selected to Pharmacy</p>
                             <p className='text-xs text-muted-foreground text-left'>Let a pharmacy prepare your order for you.</p>
                          </div>
                     </Button>
@@ -240,3 +282,5 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
 };
 
 export default Prescriptions;
+
+    
