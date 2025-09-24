@@ -100,7 +100,7 @@ export default function AppShell({ user }: AppShellProps) {
       case 'records':
         return <HealthRecords user={user} />;
       case 'appointments':
-        return <Appointments user={user} />;
+        return <Appointments user={user} setActiveTab={handleSetActiveTab} />;
       case 'medical':
         return <Medical initialState={medicalTabState} setActiveTab={handleSetActiveTab} />;
       case 'scan-prescription':

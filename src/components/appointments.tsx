@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info } from 'lucide-react';
+import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info, RefreshCw } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, updateDoc } from 'firebase/firestore';
@@ -19,10 +19,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Tab } from './app-shell';
 
 
 interface Appointment extends DocumentData {
@@ -37,6 +37,7 @@ interface Appointment extends DocumentData {
 
 interface AppointmentsProps {
     user: User;
+    setActiveTab: (tab: Tab) => void;
 }
 
 const AppointmentIcon = ({ type }: { type: 'video' | 'audio' | 'chat' }) => {
@@ -48,7 +49,7 @@ const AppointmentIcon = ({ type }: { type: 'video' | 'audio' | 'chat' }) => {
     }
 };
 
-const Appointments = ({ user }: AppointmentsProps) => {
+const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -87,7 +88,7 @@ const Appointments = ({ user }: AppointmentsProps) => {
         if (!selectedAppointmentId) return;
         try {
             const appointmentRef = doc(db, 'appointments', selectedAppointmentId);
-            await updateDoc(appointmentRef, { status: 'cancelled' });
+            await updateDoc(appointmentRef, { status: 'cancelled', cancellationReason: 'Cancelled by patient' });
             toast({
                 title: 'Appointment Cancelled',
                 description: 'Your appointment has been successfully cancelled.',
@@ -184,7 +185,7 @@ const Appointments = ({ user }: AppointmentsProps) => {
         {pastAppointments.length > 0 ? (
             pastAppointments.map(apt => (
                 <Card key={apt.id} className="shadow-sm rounded-xl opacity-80">
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 pb-0">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="bg-secondary p-3 rounded-full">
@@ -212,6 +213,14 @@ const Appointments = ({ user }: AppointmentsProps) => {
                             </Alert>
                         )}
                     </CardContent>
+                    {apt.status === 'cancelled' && (
+                        <CardFooter className="p-4">
+                            <Button className="w-full" variant="outline" onClick={() => setActiveTab('consult')}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Reschedule
+                            </Button>
+                        </CardFooter>
+                    )}
                 </Card>
             ))
         ) : (
