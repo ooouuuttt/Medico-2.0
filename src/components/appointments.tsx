@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 
 interface Appointment extends DocumentData {
@@ -31,6 +32,7 @@ interface Appointment extends DocumentData {
     type: 'video' | 'audio' | 'chat';
     date: Timestamp;
     status: 'upcoming' | 'completed' | 'cancelled';
+    cancellationReason?: string;
 }
 
 interface AppointmentsProps {
@@ -181,23 +183,34 @@ const Appointments = ({ user }: AppointmentsProps) => {
         </h3>
         {pastAppointments.length > 0 ? (
             pastAppointments.map(apt => (
-                <Card key={apt.id} className="shadow-sm rounded-xl opacity-70">
-                    <CardContent className="p-4 flex items-center justify-between">
-                         <div className="flex items-center gap-4">
-                             <div className="bg-secondary p-3 rounded-full">
-                                <AppointmentIcon type={apt.type} />
+                <Card key={apt.id} className="shadow-sm rounded-xl opacity-80">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-secondary p-3 rounded-full">
+                                    <AppointmentIcon type={apt.type} />
+                                </div>
+                                <div>
+                                    <p className="font-bold">{apt.doctorName}</p>
+                                    <p className="text-sm text-muted-foreground">{apt.specialty}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {formatDate(apt.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="font-bold">{apt.doctorName}</p>
-                                <p className="text-sm text-muted-foreground">{apt.specialty}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {formatDate(apt.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                </p>
-                            </div>
+                            <Badge variant={apt.status === 'completed' ? 'default' : (apt.status === 'cancelled' ? 'destructive' : 'secondary')} className='capitalize'>
+                                {apt.status}
+                            </Badge>
                         </div>
-                         <Badge variant={apt.status === 'completed' ? 'default' : (apt.status === 'cancelled' ? 'destructive' : 'secondary')} className='capitalize'>
-                            {apt.status}
-                        </Badge>
+                         {apt.status === 'cancelled' && apt.cancellationReason && (
+                            <Alert variant="destructive" className="mt-4 bg-destructive/5 border-destructive/30">
+                                <Info className="h-4 w-4" />
+                                <AlertTitle className='text-destructive'>Cancellation Reason</AlertTitle>
+                                <AlertDescription className='text-destructive/80'>
+                                    {apt.cancellationReason}
+                                </AlertDescription>
+                            </Alert>
+                        )}
                     </CardContent>
                 </Card>
             ))
