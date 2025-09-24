@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -14,10 +13,12 @@ import {
   updateDoc,
   arrayUnion,
   Timestamp,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
 import { Medication } from './user-service';
+import { createNotification } from './notification-service';
 
 
 export interface Prescription extends DocumentData {
@@ -44,13 +45,28 @@ export const getPrescriptions = (
     orderBy('createdAt', 'desc')
   );
 
+  // This snapshot listener will now also trigger notifications for new e-prescriptions.
   const unsubscribe = onSnapshot(
     q,
-    (querySnapshot) => {
-      const prescriptions: Prescription[] = [];
-      querySnapshot.forEach((doc) => {
+    async (querySnapshot) => {
+       const prescriptions: Prescription[] = [];
+      
+      const qOld = query(collection(db, 'prescriptions'), where('patientId', '==', uid));
+      const oldSnapshot = await getDocs(qOld);
+      const oldIds = new Set(oldSnapshot.docs.map(d => d.id));
+
+      for (const doc of querySnapshot.docs) {
         prescriptions.push({ id: doc.id, ...doc.data() } as Prescription);
-      });
+        // If the prescription is new, create a notification
+        if (!oldIds.has(doc.id)) {
+            const prescriptionData = doc.data() as Prescription;
+            await createNotification(uid, {
+                title: 'New E-Prescription Received',
+                description: `You have a new prescription from Dr. ${prescriptionData.doctorName}.`,
+                type: 'medicine'
+            });
+        }
+      }
       callback(prescriptions);
     },
     (error) => {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -9,6 +8,8 @@ import {
   orderBy,
   Timestamp,
   DocumentData,
+  addDoc,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -21,6 +22,21 @@ export interface Notification extends DocumentData {
   createdAt: Timestamp;
   isRead: boolean;
 }
+
+// Function to create a new notification
+export const createNotification = async (userId: string, data: Omit<Notification, 'id' | 'createdAt' | 'isRead' | 'userId'>): Promise<void> => {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      userId,
+      ...data,
+      isRead: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+};
+
 
 export const getNotifications = (
   userId: string,
@@ -54,5 +70,3 @@ export const getNotifications = (
 
   return unsubscribe;
 };
-
-    

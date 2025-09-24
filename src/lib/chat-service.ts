@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -17,6 +16,8 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { createNotification } from './notification-service';
+import { getPatientName } from './user-service';
 
 export interface Chat extends DocumentData {
   id: string;
@@ -147,10 +148,24 @@ export const sendMessage = async (
 
   // Update the last message on the parent chat document
   const chatRef = doc(db, 'chats', chatId);
-  await updateDoc(chatRef, {
-    lastMessageText: text,
-    lastMessageTimestamp: serverTimestamp(),
-  });
+  const chatSnap = await getDoc(chatRef);
+  
+  if (chatSnap.exists()) {
+      const chatData = chatSnap.data();
+      await updateDoc(chatRef, {
+        lastMessageText: text,
+        lastMessageTimestamp: serverTimestamp(),
+      });
+
+      // If the sender is a doctor, notify the patient
+      if (senderId === chatData.doctorId) {
+          await createNotification(chatData.patientId, {
+              title: `New message from Dr. ${chatData.doctorName}`,
+              description: text,
+              type: 'appointment' // Re-using appointment icon
+          })
+      }
+  }
 };
 
 // Function to create a new chat or get the ID if it exists

@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,7 +16,7 @@ import Medical from './medical';
 import PrescriptionReader from './prescription-reader';
 import { Pharmacy } from '@/lib/dummy-data';
 import { User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -33,6 +32,8 @@ import Prescriptions from './prescriptions';
 import { Medication } from '@/lib/user-service';
 import ChatList from './chat-list';
 import ChatConsultation from './chat-consultation';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { createNotification } from '@/lib/notification-service';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat';
 
@@ -67,6 +68,75 @@ export default function AppShell({ user }: AppShellProps) {
   const [chatTabState, setChatTabState] = useState<ChatTabState | undefined>();
   const { toast } = useToast();
   const { language, t, setLanguage } = useTranslation();
+
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+        collection(db, "appointments"),
+        where('patientId', '==', user.uid),
+        where('status', '==', 'upcoming')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.forEach((doc) => {
+            const appointment = doc.data();
+            const appointmentTime = (appointment.date as Timestamp).toDate();
+            const now = new Date();
+            const fiveMinutesInMs = 5 * 60 * 1000;
+
+            if (appointmentTime.getTime() > now.getTime() && appointmentTime.getTime() - now.getTime() < fiveMinutesInMs) {
+                // Check if a notification for this appointment has already been sent
+                const notificationSent = sessionStorage.getItem(`notif_${doc.id}`);
+                if (!notificationSent) {
+                    createNotification(user.uid, {
+                        title: 'Appointment Reminder',
+                        description: `Your appointment with Dr. ${appointment.doctorName} is in less than 5 minutes.`,
+                        type: 'appointment'
+                    });
+                    // Mark that notification has been sent for this session
+                    sessionStorage.setItem(`notif_${doc.id}`, 'true');
+                }
+            }
+        });
+    });
+
+    const interval = setInterval(() => {
+      // Re-run the check every minute
+      // This is a simple client-side solution. A robust solution would use server-side push notifications.
+      const now = new Date();
+       const q = query(
+          collection(db, "appointments"),
+          where('patientId', '==', user.uid),
+          where('status', '==', 'upcoming')
+      );
+      onSnapshot(q, (snapshot) => {
+        snapshot.forEach((doc) => {
+            const appointment = doc.data();
+            const appointmentTime = (appointment.date as Timestamp).toDate();
+            const fiveMinutesInMs = 5 * 60 * 1000;
+             if (appointmentTime.getTime() > now.getTime() && appointmentTime.getTime() - now.getTime() < fiveMinutesInMs) {
+                 const notificationSent = sessionStorage.getItem(`notif_${doc.id}`);
+                 if (!notificationSent) {
+                    createNotification(user.uid, {
+                        title: 'Appointment Reminder',
+                        description: `Your appointment with Dr. ${appointment.doctorName} is starting soon.`,
+                        type: 'appointment'
+                    });
+                    sessionStorage.setItem(`notif_${doc.id}`, 'true');
+                 }
+            }
+        })
+      })
+    }, 60000); // every minute
+
+
+    return () => {
+        unsubscribe();
+        clearInterval(interval);
+    }
+  }, [user]);
 
 
   const handleSetActiveTab = (tab: Tab, state?: any) => {

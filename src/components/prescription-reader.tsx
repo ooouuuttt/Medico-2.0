@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import { Tab, MedicalTabState } from './app-shell';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { saveScannedPrescription } from '@/lib/prescription-service';
+import { createNotification } from '@/lib/notification-service';
 
 interface PrescriptionReaderProps {
   user: User;
@@ -74,6 +74,13 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
       setIsSaving(true);
       try {
         await saveScannedPrescription(user.uid, result);
+        
+        await createNotification(user.uid, {
+            title: 'Prescription Saved',
+            description: `Scanned prescription from Dr. ${result.doctorName} has been saved.`,
+            type: 'medicine'
+        });
+
         toast({
           title: "Prescription Saved",
           description: "The prescription has been added to your health records.",

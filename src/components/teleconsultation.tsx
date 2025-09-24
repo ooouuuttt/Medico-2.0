@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +10,6 @@ import { specialties } from '@/lib/dummy-data';
 import { Badge } from '@/components/ui/badge';
 import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
-import ChatConsultation from './chat-consultation';
 import { Calendar } from './ui/calendar';
 import { add, format, isSameDay, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -23,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getPatientName } from '@/lib/user-service';
 import { createOrGetChat } from '@/lib/chat-service';
 import { Tab } from './app-shell';
+import { createNotification } from '@/lib/notification-service';
 
 
 interface Doctor extends DocumentData {
@@ -98,7 +97,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const booked = snapshot.docs
-        .map(doc => ({ ...doc.data(), id: doc.id }))
+        .map(doc => doc.data())
         .filter(apt => apt.status === 'upcoming')
         .map(apt => {
           const appointmentDate = (apt.date as Timestamp).toDate();
@@ -150,6 +149,13 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
     try {
         const patientName = await getPatientName(user.uid) || user.displayName || 'Anonymous';
         const chatId = await createOrGetChat(user.uid, doctor.id, patientName, doctor.name);
+
+        await createNotification(user.uid, {
+            title: 'Chat Started',
+            description: `You have started a chat with Dr. ${doctor.name}.`,
+            type: 'appointment'
+        });
+
         toast({
             title: 'Chat Started!',
             description: `You can now chat with Dr. ${doctor.name}.`,
@@ -205,6 +211,13 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
             date: Timestamp.fromDate(appointmentDate),
             status: 'upcoming',
         });
+
+        await createNotification(user.uid, {
+            title: 'Appointment Booked',
+            description: `Your ${consultationType} appointment with Dr. ${selectedDoctor.name} is confirmed.`,
+            type: 'appointment'
+        });
+
         setStep('confirmation');
     } catch (error) {
         console.error("Error booking appointment: ", error);

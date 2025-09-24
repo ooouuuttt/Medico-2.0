@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -117,8 +116,8 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
             notifications.map((notification, index) => {
               const Icon = iconMap[notification.type] || Bell;
               return (
-                <div key={notification.id} className="flex flex-col gap-2 p-4">
-                    <div className="flex items-start gap-3">
+                <div key={notification.id} className="flex flex-col">
+                    <div className="flex items-start gap-3 p-4">
                       <div className="bg-secondary p-2 rounded-full mt-1">
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
@@ -130,7 +129,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
                         <p className='mt-1'>{notification.description}</p>
                       </div>
                     </div>
-                     {index < notifications.length - 1 && <Separator className="mt-2" />}
+                     {index < notifications.length - 1 && <Separator />}
                 </div>
               );
             })
@@ -178,5 +177,3 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
 };
 
 export default Dashboard;
-
-    

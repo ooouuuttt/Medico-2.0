@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info, RefreshCw } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardFooter } from './ui/card';
@@ -23,6 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Tab } from './app-shell';
+import { createNotification } from '@/lib/notification-service';
 
 
 interface Appointment extends DocumentData {
@@ -33,6 +33,7 @@ interface Appointment extends DocumentData {
     date: Timestamp;
     status: 'upcoming' | 'completed' | 'cancelled';
     cancellationReason?: string;
+    cancelledBy?: 'patient' | 'doctor';
 }
 
 interface AppointmentsProps {
@@ -55,6 +56,8 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
     const { toast } = useToast();
+    const prevAppointmentsRef = useRef<Appointment[]>([]);
+
 
     useEffect(() => {
         if (!user) {
@@ -74,7 +77,23 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
             querySnapshot.forEach((doc) => {
                 fetchedAppointments.push({ id: doc.id, ...doc.data() } as Appointment);
             });
+            
+            // Compare with previous state to detect changes
+            const prevAppointments = prevAppointmentsRef.current;
+            fetchedAppointments.forEach(newApt => {
+                const oldApt = prevAppointments.find(a => a.id === newApt.id);
+                if (oldApt && oldApt.status !== 'cancelled' && newApt.status === 'cancelled' && newApt.cancelledBy === 'doctor') {
+                     createNotification(user.uid, {
+                        title: 'Appointment Cancelled',
+                        description: `Dr. ${newApt.doctorName} cancelled your appointment. Reason: ${newApt.cancellationReason}`,
+                        type: 'alert'
+                    });
+                }
+            });
+
+
             setAppointments(fetchedAppointments);
+            prevAppointmentsRef.current = fetchedAppointments;
             setIsLoading(false);
         }, (error) => {
             console.error("Failed to fetch appointments:", error);
@@ -88,7 +107,17 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
         if (!selectedAppointmentId) return;
         try {
             const appointmentRef = doc(db, 'appointments', selectedAppointmentId);
-            await updateDoc(appointmentRef, { status: 'cancelled', cancellationReason: 'Cancelled by patient' });
+            await updateDoc(appointmentRef, { status: 'cancelled', cancellationReason: 'Cancelled by patient', cancelledBy: 'patient' });
+            
+            const apt = appointments.find(a => a.id === selectedAppointmentId);
+            if (apt) {
+                createNotification(user.uid, {
+                    title: 'Appointment Cancelled',
+                    description: `You have cancelled your appointment with Dr. ${apt.doctorName}.`,
+                    type: 'appointment'
+                });
+            }
+
             toast({
                 title: 'Appointment Cancelled',
                 description: 'Your appointment has been successfully cancelled.',
