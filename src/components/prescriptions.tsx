@@ -7,14 +7,17 @@ import { getPrescriptions, Prescription } from '@/lib/prescription-service';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import { FileText, Clock } from 'lucide-react';
-import { Separator } from './ui/separator';
+import { FileText, Clock, Download, ShoppingCart } from 'lucide-react';
+import { Button } from './ui/button';
+import jsPDF from 'jspdf';
+import type { Tab } from './app-shell';
 
 interface PrescriptionsProps {
   user: User;
+  setActiveTab: (tab: Tab, state?: any) => void;
 }
 
-const Prescriptions = ({ user }: PrescriptionsProps) => {
+const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,6 +35,65 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
 
     return () => unsubscribe();
   }, [user]);
+  
+  const handleDownload = (prescription: Prescription) => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Medico Prescription', 10, 20);
+
+    doc.setFontSize(14);
+    doc.text(`Doctor: Dr. ${prescription.doctorName}`, 10, 40);
+    doc.text(`Patient: ${prescription.patientName}`, 10, 50);
+    const formattedDate = new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    doc.text(`Date: ${formattedDate}`, 10, 60);
+    
+    doc.setFontSize(16);
+    doc.text('Medications', 10, 80);
+    
+    let yPos = 90;
+    prescription.medications.forEach((med, index) => {
+      doc.setFontSize(12);
+      doc.text(`${index + 1}. ${med.name} (${med.dosage})`, 15, yPos);
+      doc.setFontSize(10);
+      doc.text(`  - Frequency: ${med.frequency}`, 15, yPos + 7);
+      if(med.duration) {
+          doc.text(`  - Duration: ${med.duration}`, 15, yPos + 14);
+          yPos += 21;
+      } else {
+          yPos += 14;
+      }
+      if(yPos > 280) { // New page if content overflows
+          doc.addPage();
+          yPos = 20;
+      }
+    });
+
+    if(prescription.instructions) {
+        doc.setFontSize(12);
+        doc.text('Instructions:', 10, yPos + 10);
+        doc.setFontSize(10);
+        doc.text(prescription.instructions, 15, yPos + 17);
+        yPos += 24;
+    }
+
+    if(prescription.followUp) {
+        doc.setFontSize(12);
+        doc.text(`Follow-up: ${prescription.followUp}`, 10, yPos + 10);
+    }
+
+    doc.save(`prescription-${prescription.id}.pdf`);
+  }
+
+  const handleOrder = (prescription: Prescription) => {
+    if (prescription.medications.length > 0) {
+      setActiveTab('medical', { medicineName: prescription.medications[0].name });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -97,6 +159,16 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
                 {prescription.followUp && <p className='text-sm font-semibold flex items-center gap-2'><Clock className='w-4 h-4 text-primary' /> {prescription.followUp}</p>}
             </CardFooter>
           )}
+          <CardFooter className='gap-2 pt-4 border-t'>
+              <Button variant='outline' className='w-full' onClick={() => handleDownload(prescription)}>
+                  <Download className='mr-2 h-4 w-4'/>
+                  Download
+              </Button>
+              <Button className='w-full' onClick={() => handleOrder(prescription)}>
+                  <ShoppingCart className='mr-2 h-4 w-4'/>
+                  Order Medicines
+              </Button>
+          </CardFooter>
         </Card>
       ))}
     </div>
