@@ -116,19 +116,6 @@ export const pharmacies: Pharmacy[] = [
   },
 ];
 
-export const reminders = [
-  { id: 'r1', title: 'Consultation with Dr. Verma', time: 'Tomorrow, 10:00 AM', type: 'appointment' },
-  { id: 'r2', title: 'Take Paracetamol', time: 'Today, 9:00 PM', type: 'medicine' },
-  { id: 'r3', title: 'Child Vaccination - Polio', time: '2024-08-05', type: 'vaccine' },
-];
-
-export const notifications = [
-    { id: 'n1', type: 'appointment', title: 'Appointment Confirmed', time: 'Today, 9:30 AM', description: 'Your appointment with Dr. Sharma for tomorrow is confirmed.' },
-    { id: 'n2', type: 'medicine', title: 'Prescription Ready', time: 'Yesterday, 5:00 PM', description: 'Your prescription is ready for pickup at Apollo Pharmacy.' },
-    { id: 'n3', type: 'trends', title: 'AI Health Insight', time: '2 days ago', description: 'Your blood pressure has been trending slightly high. Consider reducing salt intake.' },
-    { id: 'n4', type: 'alert', title: 'Medication Refill', time: '3 days ago', description: 'Your Folic Acid prescription is due for a refill soon.' },
-];
-
 export const specialties = [
     { name: 'General Physician', icon: 'Stethoscope' },
     { name: 'Pediatrics', icon: 'Baby' },
@@ -169,3 +156,5 @@ export const vitalsData = {
   bloodPressure: generateBloodPressure(7),
   temperature: generateVitals(7, 97, 100),
 }
+
+    

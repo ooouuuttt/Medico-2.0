@@ -18,12 +18,13 @@ import {
 import type { Tab } from '@/components/app-shell';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { notifications, reminders } from '@/lib/dummy-data';
 import { getHealthNewsSummary } from '@/ai/flows/health-news-summaries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/context/i18n';
-import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { getNotifications, Notification } from '@/lib/notification-service';
+import { User } from 'firebase/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 interface DashboardProps {
   setActiveTab: (tab: Tab) => void;
@@ -40,7 +41,10 @@ const iconMap: { [key: string]: React.ElementType } = {
 const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
   const [newsSummary, setNewsSummary] = useState('');
   const [isLoadingNews, setIsLoadingNews] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const { t } = useTranslation();
+  const user = useAuth();
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -57,6 +61,19 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
     };
     fetchNews();
   }, []);
+
+  useEffect(() => {
+    if (user?.uid) {
+      setIsLoadingNotifications(true);
+      const unsubscribe = getNotifications(user.uid, (newNotifications) => {
+        setNotifications(newNotifications);
+        setIsLoadingNotifications(false);
+      });
+      return () => unsubscribe();
+    } else {
+        setIsLoadingNotifications(false);
+    }
+  }, [user]);
 
   const quickAccessItems = [
     { title: t('symptom_checker'), icon: Bot, tab: 'symptoms' },
@@ -91,24 +108,36 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
         </CardHeader>
         <CardContent className="p-0 text-sm">
           <div className='max-h-48 overflow-y-auto'>
-          {notifications.map((notification, index) => {
-            const Icon = iconMap[notification.type] || Bell;
-            return (
-              <div key={notification.id} className="flex flex-col gap-2 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-secondary p-2 rounded-full mt-1">
-                      <Icon className="h-5 w-5 text-primary" />
+          {isLoadingNotifications ? (
+            <div className='p-4 space-y-3'>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : notifications.length > 0 ? (
+            notifications.map((notification, index) => {
+              const Icon = iconMap[notification.type] || Bell;
+              return (
+                <div key={notification.id} className="flex flex-col gap-2 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-secondary p-2 rounded-full mt-1">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{notification.title}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {new Date(notification.createdAt.toDate()).toLocaleString()}
+                        </p>
+                        <p className='mt-1'>{notification.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">{notification.title}</p>
-                      <p className="text-muted-foreground text-xs">{notification.time}</p>
-                      <p className='mt-1'>{notification.description}</p>
-                    </div>
-                  </div>
-                   {index < notifications.length - 1 && <Separator className="mt-2" />}
-              </div>
-            );
-          })}
+                     {index < notifications.length - 1 && <Separator className="mt-2" />}
+                </div>
+              );
+            })
+          ) : (
+            <p className='text-center text-muted-foreground p-4'>No new notifications.</p>
+          )}
           </div>
         </CardContent>
         <CardFooter className='p-2 bg-secondary/30'>
@@ -150,3 +179,5 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
 };
 
 export default Dashboard;
+
+    
