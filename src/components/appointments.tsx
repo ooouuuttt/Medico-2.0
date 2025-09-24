@@ -2,14 +2,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, DocumentData, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { Skeleton } from './ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Appointment extends DocumentData {
     id: string;
@@ -36,6 +49,9 @@ const AppointmentIcon = ({ type }: { type: 'video' | 'audio' | 'chat' }) => {
 const Appointments = ({ user }: AppointmentsProps) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (!user) {
@@ -64,6 +80,34 @@ const Appointments = ({ user }: AppointmentsProps) => {
 
         return () => unsubscribe();
     }, [user]);
+
+    const handleCancelAppointment = async () => {
+        if (!selectedAppointmentId) return;
+        try {
+            const appointmentRef = doc(db, 'appointments', selectedAppointmentId);
+            await updateDoc(appointmentRef, { status: 'cancelled' });
+            toast({
+                title: 'Appointment Cancelled',
+                description: 'Your appointment has been successfully cancelled.',
+            });
+        } catch (error) {
+            console.error('Error cancelling appointment:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to cancel the appointment. Please try again.',
+            });
+        } finally {
+            setIsCancelDialogOpen(false);
+            setSelectedAppointmentId(null);
+        }
+    };
+
+    const openCancelDialog = (appointmentId: string) => {
+        setSelectedAppointmentId(appointmentId);
+        setIsCancelDialogOpen(true);
+    };
+
 
     const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
     const pastAppointments = appointments.filter(a => a.status !== 'upcoming');
@@ -101,22 +145,27 @@ const Appointments = ({ user }: AppointmentsProps) => {
         {upcomingAppointments.length > 0 ? (
             upcomingAppointments.map(apt => (
                 <Card key={apt.id} className="shadow-sm rounded-xl">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-secondary p-3 rounded-full">
-                                <AppointmentIcon type={apt.type} />
-                            </div>
-                            <div>
-                                <p className="font-bold">{apt.doctorName}</p>
-                                <p className="text-sm text-muted-foreground">{apt.specialty}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {formatDate(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                    {' at '}
-                                    {formatDate(apt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                                </p>
+                    <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-secondary p-3 rounded-full">
+                                    <AppointmentIcon type={apt.type} />
+                                </div>
+                                <div>
+                                    <p className="font-bold">{apt.doctorName}</p>
+                                    <p className="text-sm text-muted-foreground">{apt.specialty}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {formatDate(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        {' at '}
+                                        {formatDate(apt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <Button>Join Call</Button>
+                        <div className="flex gap-2 mt-4">
+                            <Button className="w-full">Join Call</Button>
+                            <Button variant="destructive" className="w-full" onClick={() => openCancelDialog(apt.id)}>Cancel</Button>
+                        </div>
                     </CardContent>
                 </Card>
             ))
@@ -146,7 +195,9 @@ const Appointments = ({ user }: AppointmentsProps) => {
                                 </p>
                             </div>
                         </div>
-                         <Badge variant={apt.status === 'completed' ? 'default' : 'destructive'} className='capitalize bg-green-100 text-green-800'>{apt.status}</Badge>
+                         <Badge variant={apt.status === 'completed' ? 'default' : (apt.status === 'cancelled' ? 'destructive' : 'secondary')} className='capitalize'>
+                            {apt.status}
+                        </Badge>
                     </CardContent>
                 </Card>
             ))
@@ -154,6 +205,24 @@ const Appointments = ({ user }: AppointmentsProps) => {
             <p className="text-muted-foreground text-sm text-center py-4">You have no past appointments.</p>
         )}
       </div>
+      
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                This action cannot be undone. This will permanently cancel your appointment.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setSelectedAppointmentId(null)}>Back</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCancelAppointment} className="bg-destructive hover:bg-destructive/90">
+                    Yes, cancel it
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+     </AlertDialog>
+
 
     </div>
   );
