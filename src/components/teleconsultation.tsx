@@ -13,7 +13,7 @@ import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
 import { Calendar } from './ui/calendar';
-import { add, format, isSameDay } from 'date-fns';
+import { add, format, isSameDay, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp, where } from 'firebase/firestore';
@@ -206,7 +206,30 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 
   const today = new Date();
   const defaultSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM'];
-  const availableSlots = defaultSlots.filter(slot => !bookedSlots.includes(slot));
+  
+  const getAvailableSlots = () => {
+    let slots = defaultSlots.filter(slot => !bookedSlots.includes(slot));
+    
+    if (selectedDate && isSameDay(selectedDate, startOfToday())) {
+        const now = new Date();
+        slots = slots.filter(time => {
+            const [hourMinute, period] = time.split(' ');
+            let [hour, minute] = hourMinute.split(':').map(Number);
+            if (period === 'PM' && hour !== 12) {
+                hour += 12;
+            }
+            if (period === 'AM' && hour === 12) {
+                hour = 0;
+            }
+            const slotTime = new Date(selectedDate);
+            slotTime.setHours(hour, minute, 0, 0);
+            return slotTime > now;
+        });
+    }
+    return slots;
+  };
+  
+  const availableSlots = getAvailableSlots();
 
 
   const consultTypeIcons = {
