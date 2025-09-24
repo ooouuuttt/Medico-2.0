@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -31,14 +31,22 @@ import Appointments from './appointments';
 import { useTranslation } from '@/context/i18n';
 import Prescriptions from './prescriptions';
 import { Medication } from '@/lib/user-service';
+import ChatList from './chat-list';
+import ChatConsultation from './chat-consultation';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
   medicineName?: string;
   medicinesToFind?: string[]; // For finding all medicines in a prescription
   prescriptionToSend?: { doctorName: string; date: string, medications: Medication[] }; // For sending a prescription
+}
+
+export interface ChatTabState {
+    chatId: string;
+    doctorName: string;
+    doctorAvatar: string;
 }
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
@@ -56,16 +64,22 @@ const languageNames: {[key: string]: string} = {
 export default function AppShell({ user }: AppShellProps) {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [medicalTabState, setMedicalTabState] = useState<MedicalTabState>({});
+  const [chatTabState, setChatTabState] = useState<ChatTabState | undefined>();
   const { toast } = useToast();
   const { language, t, setLanguage } = useTranslation();
 
 
-  const handleSetActiveTab = (tab: Tab, state?: MedicalTabState) => {
+  const handleSetActiveTab = (tab: Tab, state?: any) => {
+    setMedicalTabState({});
+    setChatTabState(undefined);
+
     if (tab === 'medical' && state) {
       setMedicalTabState(state);
-    } else {
-      setMedicalTabState({});
+    } 
+    if (tab === 'chat' && state) {
+        setChatTabState(state);
     }
+    
     setActiveTab(tab);
   };
 
@@ -82,7 +96,7 @@ export default function AppShell({ user }: AppShellProps) {
       case 'symptoms':
         return <SymptomChecker />;
       case 'consult':
-        return <Teleconsultation user={user} />;
+        return <Teleconsultation user={user} setActiveTab={handleSetActiveTab} />;
       case 'records':
         return <HealthRecords user={user} />;
       case 'appointments':
@@ -93,6 +107,11 @@ export default function AppShell({ user }: AppShellProps) {
         return <PrescriptionReader user={user} setActiveTab={handleSetActiveTab} />;
       case 'prescriptions':
         return <Prescriptions user={user} setActiveTab={handleSetActiveTab} />;
+      case 'chats':
+        return <ChatList user={user} setActiveTab={handleSetActiveTab} />;
+      case 'chat':
+        if (!chatTabState) return <ChatList user={user} setActiveTab={handleSetActiveTab} />;
+        return <ChatConsultation chatId={chatTabState.chatId} doctorName={chatTabState.doctorName} doctorAvatar={chatTabState.doctorAvatar} user={user} onEnd={() => setActiveTab('chats')} />;
       case 'profile':
         return <Profile user={user} />;
       default:
@@ -103,8 +122,8 @@ export default function AppShell({ user }: AppShellProps) {
   const navItems = [
     { id: 'home', icon: Home, label: t('home') },
     { id: 'consult', icon: Stethoscope, label: t('consult') },
+    { id: 'chats', icon: MessageSquare, label: 'Chats' },
     { id: 'prescriptions', icon: FileText, label: t('prescriptions')},
-    { id: 'appointments', icon: CalendarCheck, label: t('appointments') },
     { id: 'records', icon: ClipboardList, label: t('records') },
   ];
 
@@ -158,6 +177,10 @@ export default function AppShell({ user }: AppShellProps) {
                 <DropdownMenuItem onClick={() => setActiveTab('profile')}>
                   <UserIcon className="mr-2 h-4 w-4" />
                   <span>{t('profile')}</span>
+                </DropdownMenuItem>
+                 <DropdownMenuItem onClick={() => setActiveTab('appointments')}>
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  <span>{t('appointments')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>

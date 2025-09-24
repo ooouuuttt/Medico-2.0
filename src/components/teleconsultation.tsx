@@ -21,6 +21,9 @@ import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { getPatientName } from '@/lib/user-service';
+import { createOrGetChat } from '@/lib/chat-service';
+import { Tab } from './app-shell';
+
 
 interface Doctor extends DocumentData {
   id: string;
@@ -33,6 +36,7 @@ interface Doctor extends DocumentData {
 
 interface TeleconsultationProps {
   user: User;
+  setActiveTab: (tab: Tab, state?: any) => void;
 }
 
 type ConsultationStep = 'specialty' | 'doctors' | 'time' | 'payment' | 'confirmation' | 'consulting';
@@ -44,7 +48,7 @@ const consultationPrices = {
   chat: 150,
 };
 
-const Teleconsultation = ({ user }: TeleconsultationProps) => {
+const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
   const [step, setStep] = useState<ConsultationStep>('specialty');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -80,25 +84,28 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
       return;
     }
     
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     const q = query(
       collection(db, 'appointments'),
-      where('doctorId', '==', selectedDoctor.id)
+      where('doctorId', '==', selectedDoctor.id),
+      where('date', '>=', Timestamp.fromDate(startOfDay)),
+      where('date', '<=', Timestamp.fromDate(endOfDay))
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const booked = snapshot.docs
         .map(doc => ({ ...doc.data(), id: doc.id }))
-        .filter(apt => {
-          const aptDate = (apt.date as Timestamp).toDate();
-          return isSameDay(aptDate, selectedDate) && apt.status === 'upcoming';
-        })
+        .filter(apt => apt.status === 'upcoming')
         .map(apt => {
           const appointmentDate = (apt.date as Timestamp).toDate();
           return format(appointmentDate, 'hh:mm a');
         });
       setBookedSlots(booked);
     }, (error) => {
-        // This is where the error was happening.
         console.error("Error fetching appointments snapshot:", error);
         toast({
             variant: "destructive",
@@ -129,9 +136,34 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
   ) => {
     setSelectedDoctor(doctor);
     setConsultationType(type);
+
+    if (type === 'chat') {
+        handleBookChatNow(doctor);
+        return;
+    }
+
     setSelectedTime(null); // Reset time selection when doctor changes
     setStep('time');
   };
+  
+  const handleBookChatNow = async (doctor: Doctor) => {
+    try {
+        const patientName = await getPatientName(user.uid) || user.displayName || 'Anonymous';
+        const chatId = await createOrGetChat(user.uid, doctor.id, patientName, doctor.name);
+        toast({
+            title: 'Chat Started!',
+            description: `You can now chat with Dr. ${doctor.name}.`,
+        });
+        setActiveTab('chat', { chatId, doctorName: doctor.name, doctorAvatar: doctor.avatar });
+    } catch(error) {
+        console.error('Failed to start chat:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not start the chat session.'
+        })
+    }
+  }
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
@@ -252,8 +284,6 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
         return <VideoConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
       case 'audio':
         return <AudioConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
-      case 'chat':
-        return <ChatConsultation doctor={dummyDoctorForConsult} onEnd={handleEndConsultation} />;
       default:
         handleReset();
         return null;
@@ -323,7 +353,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Fee</span>
-                    <span className="font-semibold">₹{consultationType ? consultationPrices[consultationType] : 0}</span>
+                    <span className="font-semibold">₹{consultationType ? consultationPrices[consultationType as keyof typeof consultationPrices] : 0}</span>
                 </div>
             </div>
             <Separator />
@@ -337,7 +367,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
               </div>
             </div>
             <Button className="w-full" size="lg" onClick={handlePayment}>
-              Pay ₹{consultationType ? consultationPrices[consultationType] : 0}
+              Pay ₹{consultationType ? consultationPrices[consultationType as keyof typeof consultationPrices] : 0}
             </Button>
           </CardContent>
         </Card>
@@ -432,7 +462,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
                 <CardHeader className="p-4">
                    <div className="flex gap-4">
                      <Image
-                        src={doctor.avatar}
+                        src={doctorAvatar(doctor)}
                         alt={doctor.name}
                         width={80}
                         height={80}
@@ -454,7 +484,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
                             {(doctor.consultationTypes || ['video', 'audio', 'chat']).map(type => {
                                 const Icon = consultTypeIcons[type];
                                 return (
-                                    <Button key={type} size="sm" variant="outline" className='h-auto flex-1' onClick={() => handleSelectDoctor(doctor, type)}>
+                                    <Button key={type} size="sm" variant="outline" className='h-auto flex-1' onClick={() => handleSelectDoctor(doctor, type as ConsultationType)}>
                                       <Icon className="h-4 w-4 mr-2" />
                                       <span className='capitalize'>{type}</span>
                                     </Button>
@@ -504,5 +534,3 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 };
 
 export default Teleconsultation;
-
-    
