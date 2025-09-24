@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { ScanText, Upload, Activity, AlertTriangle, CheckCircle, MapPin, ShoppingCart } from 'lucide-react';
+import { ScanText, Upload, Activity, AlertTriangle, CheckCircle, MapPin, ShoppingCart, Save } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { readPrescription, PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
@@ -10,18 +11,24 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
 import { Tab, MedicalTabState } from './app-shell';
+import { User } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { saveScannedPrescription } from '@/lib/prescription-service';
 
 interface PrescriptionReaderProps {
+  user: User;
   setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
 
-const PrescriptionReader = ({ setActiveTab }: PrescriptionReaderProps) => {
+const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [result, setResult] = useState<PrescriptionReaderOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const onDrop = (acceptedFiles: File[]) => {
         if (acceptedFiles && acceptedFiles.length > 0) {
@@ -62,12 +69,36 @@ const PrescriptionReader = ({ setActiveTab }: PrescriptionReaderProps) => {
         }
     };
 
+    const handleSavePrescription = async () => {
+      if (!result) return;
+      setIsSaving(true);
+      try {
+        await saveScannedPrescription(user.uid, result);
+        toast({
+          title: "Prescription Saved",
+          description: "The prescription has been added to your records.",
+        });
+        setActiveTab('prescriptions');
+      } catch (error) {
+        console.error("Failed to save prescription:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Save Failed',
+          description: 'Could not save the prescription. Please try again.',
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+
     const handleReset = () => {
         setFile(null);
         setPreview(null);
         setResult(null);
         setError(null);
         setIsLoading(false);
+        setIsSaving(false);
     };
 
     const findPharmaciesForMedicine = (medicineName: string): Pharmacy[] => {
@@ -107,7 +138,7 @@ const PrescriptionReader = ({ setActiveTab }: PrescriptionReaderProps) => {
                     <CardContent className="p-4">
                         <img src={preview} alt="Prescription preview" className="rounded-lg max-h-64 w-full object-contain" />
                         <div className="flex gap-2 mt-4">
-                             <Button onClick={handleAnalyze} disabled={isLoading} className="w-full">
+                             <Button onClick={handleAnalyze} disabled={isLoading || !!result} className="w-full">
                                 {isLoading ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Analyzing...</> : 'Analyze Prescription'}
                             </Button>
                             <Button onClick={handleReset} variant="outline" className="w-full">
@@ -128,8 +159,11 @@ const PrescriptionReader = ({ setActiveTab }: PrescriptionReaderProps) => {
 
             {result && (
                 <Card className="rounded-xl animate-in fade-in duration-500">
-                    <CardHeader>
+                    <CardHeader className='flex-row items-center justify-between'>
                         <CardTitle className='flex items-center gap-2'><CheckCircle className='text-green-500' /> Analysis Complete</CardTitle>
+                         <Button onClick={handleSavePrescription} disabled={isSaving} size="sm">
+                            {isSaving ? <><Activity className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save</>}
+                        </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex justify-between text-sm">

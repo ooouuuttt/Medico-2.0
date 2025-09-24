@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -29,8 +29,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Appointments from './appointments';
 import { useTranslation } from '@/context/i18n';
+import Prescriptions from './prescriptions';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'prescription' | 'appointments';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
@@ -85,8 +86,10 @@ export default function AppShell({ user }: AppShellProps) {
         return <Appointments user={user} />;
       case 'medical':
         return <Medical initialState={medicalTabState} />;
-      case 'prescription':
-        return <PrescriptionReader setActiveTab={handleSetActiveTab} />;
+      case 'scan-prescription':
+        return <PrescriptionReader user={user} setActiveTab={handleSetActiveTab} />;
+      case 'prescriptions':
+        return <Prescriptions user={user} />;
       case 'profile':
         return <Profile user={user} />;
       default:
@@ -97,9 +100,9 @@ export default function AppShell({ user }: AppShellProps) {
   const navItems = [
     { id: 'home', icon: Home, label: t('home') },
     { id: 'consult', icon: Stethoscope, label: t('consult') },
+    { id: 'prescriptions', icon: FileText, label: t('prescriptions')},
     { id: 'appointments', icon: CalendarCheck, label: t('appointments') },
     { id: 'records', icon: ClipboardList, label: t('records') },
-    { id: 'profile', icon: UserIcon, label: t('profile') },
   ];
 
   return (

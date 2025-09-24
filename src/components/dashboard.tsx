@@ -61,7 +61,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
   const quickAccessItems = [
     { title: t('symptom_checker'), icon: Bot, tab: 'symptoms' },
     { title: t('book_consultation'), icon: Stethoscope, tab: 'consult' },
-    { title: t('scan_prescription'), icon: ScanText, tab: 'prescription' },
+    { title: t('scan_prescription'), icon: ScanText, tab: 'scan-prescription' },
     { title: t('order_medicines'), icon: Pill, tab: 'medical' },
   ];
 
