@@ -23,7 +23,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/context/i18n';
 import { Separator } from './ui/separator';
 import { getNotifications, Notification } from '@/lib/notification-service';
-import { User } from 'firebase/auth';
 import { useAuth } from '@/hooks/use-auth';
 
 interface DashboardProps {
