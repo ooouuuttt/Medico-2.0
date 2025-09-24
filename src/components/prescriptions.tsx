@@ -3,18 +3,19 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { getPrescriptions, PastPrescription } from '@/lib/prescription-service';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { getPrescriptions, Prescription } from '@/lib/prescription-service';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import { FileText, Scan } from 'lucide-react';
+import { FileText, Clock } from 'lucide-react';
+import { Separator } from './ui/separator';
 
 interface PrescriptionsProps {
   user: User;
 }
 
 const Prescriptions = ({ user }: PrescriptionsProps) => {
-  const [prescriptions, setPrescriptions] = useState<PastPrescription[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,8 +35,8 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
+      <div className="space-y-4 animate-pulse">
+        <Skeleton className="h-8 w-48 rounded-md" />
         <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-40 w-full rounded-xl" />
@@ -49,7 +50,7 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
             <FileText className="h-16 w-16 text-muted-foreground" />
             <h2 className="text-2xl font-bold font-headline">No Prescriptions Found</h2>
             <p className="text-muted-foreground">
-                Your saved and e-prescriptions will appear here.
+                Your e-prescriptions from doctors will appear here.
             </p>
         </div>
       )
@@ -65,16 +66,15 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
               <div>
                 <CardTitle className="text-lg">Dr. {prescription.doctorName}</CardTitle>
                 <CardDescription className="pt-1">
-                  {new Date(prescription.date).toLocaleDateString('en-IN', {
+                  {new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
                 </CardDescription>
               </div>
-               <Badge variant={prescription.id.startsWith('scan_') ? 'secondary' : 'default'} className="capitalize">
-                 {prescription.id.startsWith('scan_') ? <Scan className="w-3 h-3 mr-1.5"/> : null}
-                {prescription.id.startsWith('scan_') ? 'scanned' : 'e-prescription'}
+               <Badge variant='default' className="capitalize">
+                E-Prescription
               </Badge>
             </div>
           </CardHeader>
@@ -82,15 +82,21 @@ const Prescriptions = ({ user }: PrescriptionsProps) => {
             {prescription.medications.map((med, index) => (
               <div key={index} className="border p-3 rounded-lg text-sm bg-background">
                 <p className="font-bold text-base capitalize">{med.name}</p>
-                <div className="grid grid-cols-3 gap-2 text-muted-foreground mt-2">
-                    <div><Badge variant="outline" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
-                    <div><Badge variant="outline" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
-                    {med.duration && <div><Badge variant="outline" className='w-full justify-center text-center'>{med.duration}</Badge></div>}
+                <div className="flex flex-wrap gap-2 text-muted-foreground mt-2">
+                    {med.dosage && <div><Badge variant="outline">{med.dosage}</Badge></div>}
+                    {med.frequency && <div><Badge variant="outline">{med.frequency}</Badge></div>}
+                    {med.duration && <div><Badge variant="outline">{med.duration}</Badge></div>}
                 </div>
                  {med.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Notes: {med.notes}</p>}
               </div>
             ))}
           </CardContent>
+          {(prescription.followUp || prescription.instructions) && (
+             <CardFooter className='flex-col items-start gap-2 pt-4 border-t'>
+                {prescription.instructions && <p className='text-sm text-muted-foreground'>**Instructions:** {prescription.instructions}</p>}
+                {prescription.followUp && <p className='text-sm font-semibold flex items-center gap-2'><Clock className='w-4 h-4 text-primary' /> {prescription.followUp}</p>}
+            </CardFooter>
+          )}
         </Card>
       ))}
     </div>
