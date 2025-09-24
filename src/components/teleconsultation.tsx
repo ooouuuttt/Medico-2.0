@@ -87,14 +87,15 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
       collection(db, 'appointments'),
       where('doctorId', '==', selectedDoctor.id),
       where('date', '>=', start),
-      where('date', '<=', end),
-      where('status', '==', 'upcoming')
+      where('date', '<=', end)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const booked = snapshot.docs.map(doc => {
-        const appointmentDate = (doc.data().date as Timestamp).toDate();
-        return format(appointmentDate, 'hh:mm a');
+      const booked = snapshot.docs
+        .filter(doc => doc.data().status === 'upcoming')
+        .map(doc => {
+          const appointmentDate = (doc.data().date as Timestamp).toDate();
+          return format(appointmentDate, 'hh:mm a');
       });
       setBookedSlots(booked);
     });
