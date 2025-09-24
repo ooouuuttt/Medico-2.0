@@ -36,7 +36,7 @@ export interface Message extends DocumentData {
   timestamp: Timestamp;
 }
 
-// Function to get all chat conversations for a user
+// Function to get all chat conversations for a patient
 export const getChats = (
   userId: string,
   callback: (chats: Chat[]) => void
@@ -69,6 +69,41 @@ export const getChats = (
 
   return unsubscribe;
 };
+
+// Function to get all chat conversations for a doctor
+export const getChatsForDoctor = (
+  doctorId: string,
+  callback: (chats: Chat[]) => void
+): (() => void) => {
+  if (!doctorId) {
+    callback([]);
+    return () => {};
+  }
+
+  const q = query(
+    collection(db, 'chats'),
+    where('doctorId', '==', doctorId),
+    orderBy('lastMessageTimestamp', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(
+    q,
+    (querySnapshot) => {
+      const chats: Chat[] = [];
+      querySnapshot.forEach((doc) => {
+        chats.push({ id: doc.id, ...doc.data() } as Chat);
+      });
+      callback(chats);
+    },
+    (error) => {
+      console.error('Error fetching chats for doctor:', error);
+      callback([]);
+    }
+  );
+
+  return unsubscribe;
+};
+
 
 // Function to get messages for a specific chat
 export const getMessages = (
