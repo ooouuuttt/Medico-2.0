@@ -13,7 +13,7 @@ import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
 import { Calendar } from './ui/calendar';
-import { add, format, startOfDay, endOfDay } from 'date-fns';
+import { add, format, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp, where } from 'firebase/firestore';
@@ -80,29 +80,36 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
       return;
     }
     
-    const start = startOfDay(selectedDate);
-    const end = endOfDay(selectedDate);
-
     const q = query(
       collection(db, 'appointments'),
-      where('doctorId', '==', selectedDoctor.id),
-      where('date', '>=', start),
-      where('date', '<=', end)
+      where('doctorId', '==', selectedDoctor.id)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const booked = snapshot.docs
-        .filter(doc => doc.data().status === 'upcoming')
-        .map(doc => {
-          const appointmentDate = (doc.data().date as Timestamp).toDate();
+        .map(doc => ({ ...doc.data(), id: doc.id }))
+        .filter(apt => {
+          const aptDate = (apt.date as Timestamp).toDate();
+          return isSameDay(aptDate, selectedDate) && apt.status === 'upcoming';
+        })
+        .map(apt => {
+          const appointmentDate = (apt.date as Timestamp).toDate();
           return format(appointmentDate, 'hh:mm a');
-      });
+        });
       setBookedSlots(booked);
+    }, (error) => {
+        // This is where the error was happening.
+        console.error("Error fetching appointments snapshot:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch appointment times. The service might be busy."
+        });
     });
 
     return () => unsubscribe();
 
-  }, [step, selectedDoctor, selectedDate]);
+  }, [step, selectedDoctor, selectedDate, toast]);
 
 
   const DynamicIcon = ({ name }: { name: keyof typeof LucideIcons }) => {
