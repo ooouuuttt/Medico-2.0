@@ -14,6 +14,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -144,3 +145,5 @@ export const createOrGetChat = async (
 
     return chatId;
 };
+
+export { updateDoc, doc };

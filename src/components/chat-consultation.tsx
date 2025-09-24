@@ -8,7 +8,7 @@ import { CardContent, CardFooter, CardHeader } from './ui/card';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { User } from 'firebase/auth';
-import { getMessages, sendMessage, Message } from '@/lib/chat-service';
+import { getMessages, sendMessage, Message, updateDoc, doc } from '@/lib/chat-service';
 import { Skeleton } from './ui/skeleton';
 
 interface ChatConsultationProps {
@@ -88,7 +88,7 @@ const ChatConsultation = ({ chatId, doctorName, doctorAvatar, user, onEnd }: Cha
                     <div className={`rounded-lg px-3 py-2 max-w-[80%] ${msg.senderId === user.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                         <p className="text-sm">{msg.text}</p>
                         <p className={`text-xs mt-1 ${msg.senderId === user.uid ? 'text-primary-foreground/70' : 'text-muted-foreground/70'}`}>
-                           {msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                           {msg.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                     </div>
                      {msg.senderId === user.uid && user.photoURL && (
