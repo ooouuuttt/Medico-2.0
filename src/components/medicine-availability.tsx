@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -17,25 +17,39 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MedicalTabState } from './app-shell';
+import { MedicalTabState, Tab } from './app-shell';
 
-type View = 'list' | 'pharmacy' | 'payment' | 'confirmation';
+type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
-const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
+const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [selectedMedicine, setSelectedMedicine] = useState<{name: string, price: number, quantity: number} | null>(null);
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
+  const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>(pharmacies);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (initialState?.pharmacy && initialState?.medicineName) {
+    if (initialState?.medicinesToFind) {
+      setSearchTerm(initialState.medicinesToFind.join(', '));
+      const pharmaciesWithAllMeds = pharmacies.filter(pharmacy =>
+        initialState.medicinesToFind!.every(medName =>
+          Object.keys(pharmacy.medicines).some(
+            (m) => m.toLowerCase().includes(medName.toLowerCase()) && pharmacy.medicines[m].status === 'In Stock'
+          )
+        )
+      );
+      setFilteredPharmacies(pharmaciesWithAllMeds);
+    } else if (initialState?.prescriptionToSend) {
+        setView('send-prescription');
+    } else if (initialState?.pharmacy && initialState?.medicineName) {
       const pharmacy = pharmacies.find(p => p.id === initialState.pharmacy?.id);
       if (pharmacy) {
         const medicineKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(initialState.medicineName!.toLowerCase()));
@@ -45,14 +59,33 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
             handleSelectMedicine(medicineKey, medicineInfo.price, medicineInfo.quantity);
         }
       }
+    } else {
+        const f = searchTerm
+        ? pharmacies.filter((pharmacy) =>
+            Object.keys(pharmacy.medicines).some(
+              (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          )
+        : pharmacies;
+        setFilteredPharmacies(f);
     }
-  }, [initialState]);
+  }, [initialState, searchTerm]);
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
     setSelectedMedicine(null);
     setSearchTerm('');
     setView('pharmacy');
+  };
+  
+  const handleSelectPharmacyForSending = (pharmacy: Pharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    // Simulate sending prescription
+    toast({
+        title: "Prescription Sent",
+        description: `Your prescription has been sent to ${pharmacy.name}. They will contact you shortly.`,
+    });
+    setView('send-confirmation');
   };
 
   const handleSelectMedicine = (name: string, price: number, quantity: number) => {
@@ -75,6 +108,12 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
     setCartItem(null);
     setSelectedPharmacy(null);
     setSelectedMedicine(null);
+    setActiveTab('medical', {}); // Reset state in app-shell
+  }
+  
+  const handleBackToHome = () => {
+    handleReset();
+    setActiveTab('home');
   }
 
   const updateQuantity = (amount: number) => {
@@ -85,17 +124,61 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
     }
   }
 
-  const filteredPharmacies = searchTerm
-    ? pharmacies.filter((pharmacy) =>
-        Object.keys(pharmacy.medicines).some(
-          (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      )
-    : pharmacies;
-
   const getMedicineInfo = (pharmacy: Pharmacy, medName: string) => {
     const medKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(medName.toLowerCase()));
     return medKey ? pharmacy.medicines[medKey] : null;
+  }
+
+  if (view === 'send-confirmation') {
+    return (
+        <div className="flex flex-col items-center justify-center text-center h-full space-y-4 p-4 animate-in fade-in duration-500">
+            <Send className="h-16 w-16 text-green-500" />
+            <h2 className="text-2xl font-bold font-headline">Prescription Sent!</h2>
+            <p className="text-muted-foreground">
+                Your prescription from <strong>Dr. {initialState?.prescriptionToSend?.doctorName}</strong> has been sent to <strong>{selectedPharmacy?.name}</strong>.
+            </p>
+            <p className="text-sm text-muted-foreground">
+                The pharmacy will contact you shortly to confirm your order.
+            </p>
+            <Button
+                onClick={handleBackToHome}
+                className="mt-4"
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+            </Button>
+        </div>
+    );
+  }
+
+  if (view === 'send-prescription') {
+      return (
+        <div className="animate-in fade-in duration-500">
+            <Button variant="ghost" size="sm" onClick={() => setActiveTab('prescriptions')} className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to prescriptions
+            </Button>
+            <h3 className="text-xl font-bold font-headline mb-4">Select a Pharmacy to Send To</h3>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {pharmacies.map((pharmacy) => (
+              <Card key={pharmacy.id} className="rounded-xl shadow-sm cursor-pointer" onClick={() => handleSelectPharmacyForSending(pharmacy)}>
+                  <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                          <h3 className="font-semibold">{pharmacy.name}</h3>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5 mr-1" />
+                              <span>{pharmacy.distance}</span>
+                          </div>
+                      </div>
+                      <Button variant="outline" size="sm">
+                          Send <Send className='h-4 w-4 ml-2' />
+                      </Button>
+                  </CardContent>
+              </Card>
+            ))}
+            </div>
+        </div>
+      )
   }
 
   if (view === 'confirmation') {
@@ -246,11 +329,15 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+      
+      {initialState?.medicinesToFind && (
+        <p className="text-sm text-muted-foreground">Showing pharmacies that have all prescribed medicines in stock.</p>
+      )}
 
       <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
           filteredPharmacies.map((pharmacy) => {
-            const medInfo = searchTerm ? getMedicineInfo(pharmacy, searchTerm) : null;
+            const medInfo = searchTerm && !initialState?.medicinesToFind ? getMedicineInfo(pharmacy, searchTerm) : null;
             return (
               <Card key={pharmacy.id} className="rounded-xl shadow-sm cursor-pointer" onClick={() => handleSelectPharmacy(pharmacy)}>
                   <CardContent className="p-4 flex items-center justify-between">
@@ -265,7 +352,7 @@ const MedicineAvailability = ({ initialState }: MedicineAvailabilityProps) => {
                               <span>{pharmacy.address}</span>
                           </div>
                       </div>
-                      {searchTerm && medInfo && (
+                      {medInfo && (
                          <div className='text-right'>
                             <Badge variant={medInfo.status === 'In Stock' ? 'default' : 'destructive'} className='bg-green-100 text-green-800'>
                                 {medInfo.status === 'In Stock' ? <CheckCircle className='w-3 h-3 mr-1.5'/> : <XCircle className='w-3 h-3 mr-1.5'/>}

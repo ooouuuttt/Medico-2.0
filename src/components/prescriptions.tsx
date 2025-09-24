@@ -7,10 +7,12 @@ import { getPrescriptions, Prescription } from '@/lib/prescription-service';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import { FileText, Clock, Download, ShoppingCart } from 'lucide-react';
+import { FileText, Clock, Download, ShoppingCart, Send, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import jsPDF from 'jspdf';
 import type { Tab } from './app-shell';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Separator } from './ui/separator';
 
 interface PrescriptionsProps {
   user: User;
@@ -20,6 +22,8 @@ interface PrescriptionsProps {
 const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -90,10 +94,28 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   }
 
   const handleOrder = (prescription: Prescription) => {
-    if (prescription.medications.length > 0) {
-      setActiveTab('medical', { medicineName: prescription.medications[0].name });
-    }
+    setSelectedPrescription(prescription);
+    setIsOrderDialogOpen(true);
   };
+  
+  const handleFindPharmacies = () => {
+    if (!selectedPrescription) return;
+    const medicineNames = selectedPrescription.medications.map(med => med.name);
+    setActiveTab('medical', { medicinesToFind: medicineNames });
+    setIsOrderDialogOpen(false);
+  }
+
+  const handleSendToPharmacy = () => {
+    if (!selectedPrescription) return;
+    setActiveTab('medical', { 
+        prescriptionToSend: {
+            doctorName: selectedPrescription.doctorName,
+            date: new Date(selectedPrescription.createdAt.toDate()).toLocaleDateString(),
+            medications: selectedPrescription.medications,
+        }
+    });
+    setIsOrderDialogOpen(false);
+  }
 
   if (isLoading) {
     return (
@@ -119,59 +141,101 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <h2 className="text-2xl font-bold font-headline">Your Prescriptions</h2>
-      {prescriptions.map((prescription) => (
-        <Card key={prescription.id} className="shadow-sm rounded-xl">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-lg">Dr. {prescription.doctorName}</CardTitle>
-                <CardDescription className="pt-1">
-                  {new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </CardDescription>
-              </div>
-               <Badge variant='default' className="capitalize">
-                E-Prescription
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {prescription.medications.map((med, index) => (
-              <div key={index} className="border p-3 rounded-lg text-sm bg-background">
-                <p className="font-bold text-base capitalize">{med.name}</p>
-                <div className="flex flex-wrap gap-2 text-muted-foreground mt-2">
-                    {med.dosage && <div><Badge variant="outline">{med.dosage}</Badge></div>}
-                    {med.frequency && <div><Badge variant="outline">{med.frequency}</Badge></div>}
-                    {med.duration && <div><Badge variant="outline">{med.duration}</Badge></div>}
+    <>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <h2 className="text-2xl font-bold font-headline">Your Prescriptions</h2>
+        {prescriptions.map((prescription) => (
+          <Card key={prescription.id} className="shadow-sm rounded-xl">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg">Dr. {prescription.doctorName}</CardTitle>
+                  <CardDescription className="pt-1">
+                    {new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </CardDescription>
                 </div>
-                 {med.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Notes: {med.notes}</p>}
+                 <Badge variant='default' className="capitalize">
+                  E-Prescription
+                </Badge>
               </div>
-            ))}
-          </CardContent>
-          {(prescription.followUp || prescription.instructions) && (
-             <CardFooter className='flex-col items-start gap-2 pt-4 border-t'>
-                {prescription.instructions && <p className='text-sm text-muted-foreground'>**Instructions:** {prescription.instructions}</p>}
-                {prescription.followUp && <p className='text-sm font-semibold flex items-center gap-2'><Clock className='w-4 h-4 text-primary' /> {prescription.followUp}</p>}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {prescription.medications.map((med, index) => (
+                <div key={index} className="border p-3 rounded-lg text-sm bg-background">
+                  <p className="font-bold text-base capitalize">{med.name}</p>
+                  <div className="flex flex-wrap gap-2 text-muted-foreground mt-2">
+                      {med.dosage && <div><Badge variant="outline">{med.dosage}</Badge></div>}
+                      {med.frequency && <div><Badge variant="outline">{med.frequency}</Badge></div>}
+                      {med.duration && <div><Badge variant="outline">{med.duration}</Badge></div>}
+                  </div>
+                   {med.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Notes: {med.notes}</p>}
+                </div>
+              ))}
+            </CardContent>
+            {(prescription.followUp || prescription.instructions) && (
+               <CardFooter className='flex-col items-start gap-2 pt-4 border-t'>
+                  {prescription.instructions && <p className='text-sm text-muted-foreground'>**Instructions:** {prescription.instructions}</p>}
+                  {prescription.followUp && <p className='text-sm font-semibold flex items-center gap-2'><Clock className='w-4 h-4 text-primary' /> {prescription.followUp}</p>}
+              </CardFooter>
+            )}
+            <CardFooter className='gap-2 pt-4 border-t'>
+                <Button variant='outline' className='w-full' onClick={() => handleDownload(prescription)}>
+                    <Download className='mr-2 h-4 w-4'/>
+                    Download
+                </Button>
+                <Button className='w-full' onClick={() => handleOrder(prescription)}>
+                    <ShoppingCart className='mr-2 h-4 w-4'/>
+                    Order Medicines
+                </Button>
             </CardFooter>
-          )}
-          <CardFooter className='gap-2 pt-4 border-t'>
-              <Button variant='outline' className='w-full' onClick={() => handleDownload(prescription)}>
-                  <Download className='mr-2 h-4 w-4'/>
-                  Download
-              </Button>
-              <Button className='w-full' onClick={() => handleOrder(prescription)}>
-                  <ShoppingCart className='mr-2 h-4 w-4'/>
-                  Order Medicines
-              </Button>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
+          </Card>
+        ))}
+      </div>
+
+       <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Order Prescription</DialogTitle>
+                    <DialogDescription>
+                        How would you like to order the medicines for this prescription from Dr. {selectedPrescription?.doctorName}?
+                    </DialogDescription>
+                </DialogHeader>
+                <div className='py-4 space-y-2'>
+                    <p className='text-sm font-semibold'>Medicines:</p>
+                    <ul className='text-sm text-muted-foreground list-disc list-inside'>
+                        {selectedPrescription?.medications.map(m => <li key={m.name} className='capitalize'>{m.name}</li>)}
+                    </ul>
+                </div>
+                <Separator />
+                <div className='py-4 space-y-4'>
+                    <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleFindPharmacies}>
+                         <Search className="mr-4 h-5 w-5 text-primary" />
+                         <div>
+                            <p className='font-semibold'>Find Pharmacies for All</p>
+                            <p className='text-xs text-muted-foreground text-left'>Search for pharmacies that stock all items.</p>
+                         </div>
+                    </Button>
+                     <Button variant="outline" className='w-full justify-start h-auto py-3' onClick={handleSendToPharmacy}>
+                         <Send className="mr-4 h-5 w-5 text-primary" />
+                         <div>
+                            <p className='font-semibold'>Send Prescription to Pharmacy</p>
+                            <p className='text-xs text-muted-foreground text-left'>Let a pharmacy prepare your order for you.</p>
+                         </div>
+                    </Button>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+    </>
   );
 };
 

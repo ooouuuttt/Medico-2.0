@@ -3,13 +3,14 @@
 
 import { Pill } from "lucide-react";
 import MedicineAvailability from "./medicine-availability";
-import { MedicalTabState } from "./app-shell";
+import { MedicalTabState, Tab } from "./app-shell";
 
 interface MedicalProps {
   initialState?: MedicalTabState;
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
-const Medical = ({ initialState }: MedicalProps) => {
+const Medical = ({ initialState, setActiveTab }: MedicalProps) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="text-center space-y-2">
@@ -19,7 +20,7 @@ const Medical = ({ initialState }: MedicalProps) => {
           Find pharmacies and order medicines online.
         </p>
       </div>
-      <MedicineAvailability initialState={initialState} />
+      <MedicineAvailability initialState={initialState} setActiveTab={setActiveTab} />
     </div>
   );
 };

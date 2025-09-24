@@ -30,12 +30,15 @@ import {
 import Appointments from './appointments';
 import { useTranslation } from '@/context/i18n';
 import Prescriptions from './prescriptions';
+import { Medication } from '@/lib/user-service';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
   medicineName?: string;
+  medicinesToFind?: string[]; // For finding all medicines in a prescription
+  prescriptionToSend?: { doctorName: string; date: string, medications: Medication[] }; // For sending a prescription
 }
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
@@ -85,7 +88,7 @@ export default function AppShell({ user }: AppShellProps) {
       case 'appointments':
         return <Appointments user={user} />;
       case 'medical':
-        return <Medical initialState={medicalTabState} />;
+        return <Medical initialState={medicalTabState} setActiveTab={handleSetActiveTab} />;
       case 'scan-prescription':
         return <PrescriptionReader user={user} setActiveTab={handleSetActiveTab} />;
       case 'prescriptions':
