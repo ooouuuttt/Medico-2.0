@@ -13,10 +13,10 @@ import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import ChatConsultation from './chat-consultation';
 import { Calendar } from './ui/calendar';
-import { add, format } from 'date-fns';
+import { add, format, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +53,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,6 +74,35 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
     return () => unsubscribe();
   }, []);
 
+  // Effect to fetch booked slots for the selected doctor and date
+  useEffect(() => {
+    if (step !== 'time' || !selectedDoctor || !selectedDate) {
+      return;
+    }
+    
+    const start = startOfDay(selectedDate);
+    const end = endOfDay(selectedDate);
+
+    const q = query(
+      collection(db, 'appointments'),
+      where('doctorId', '==', selectedDoctor.id),
+      where('date', '>=', start),
+      where('date', '<=', end),
+      where('status', '==', 'upcoming')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const booked = snapshot.docs.map(doc => {
+        const appointmentDate = (doc.data().date as Timestamp).toDate();
+        return format(appointmentDate, 'hh:mm a');
+      });
+      setBookedSlots(booked);
+    });
+
+    return () => unsubscribe();
+
+  }, [step, selectedDoctor, selectedDate]);
+
 
   const DynamicIcon = ({ name }: { name: keyof typeof LucideIcons }) => {
     const Icon = LucideIcons[name] as React.ElementType;
@@ -91,6 +121,7 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
   ) => {
     setSelectedDoctor(doctor);
     setConsultationType(type);
+    setSelectedTime(null); // Reset time selection when doctor changes
     setStep('time');
   };
 
@@ -166,7 +197,9 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
     doctor.avatar || `https://picsum.photos/seed/${doctor.id}/80/80`;
 
   const today = new Date();
-  const availableSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM'];
+  const defaultSlots = ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM'];
+  const availableSlots = defaultSlots.filter(slot => !bookedSlots.includes(slot));
+
 
   const consultTypeIcons = {
     video: LucideIcons.Video,
@@ -296,7 +329,10 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
                      <Calendar
                         mode="single"
                         selected={selectedDate}
-                        onSelect={setSelectedDate}
+                        onSelect={(date) => {
+                            setSelectedDate(date);
+                            setSelectedTime(null); // Reset time when date changes
+                        }}
                         fromDate={today}
                         toDate={add(today, { days: 6 })}
                     />
@@ -437,3 +473,5 @@ const Teleconsultation = ({ user }: TeleconsultationProps) => {
 };
 
 export default Teleconsultation;
+
+    
