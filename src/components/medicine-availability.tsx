@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,6 +37,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
   const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>(pharmacies);
   const { toast } = useToast();
+  const [billQuantities, setBillQuantities] = useState<{[key: string]: number}>({});
 
   const medicinesToFind = initialState?.medicinesToFind;
   const prescriptionToBill = initialState?.prescriptionToBill;
@@ -173,16 +173,35 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     return 1;
   };
   
-    const calculateTotalBill = (pharmacy: Pharmacy, prescription: Prescription) => {
+  const calculateTotalBill = (pharmacy: Pharmacy, prescription: Prescription) => {
     return prescription.medications.reduce((total, med) => {
         const medInfo = getMedicineInfo(pharmacy, med.name);
         if (medInfo && medInfo.status === 'In Stock') {
             const price = medInfo.price;
-            const quantity = calculateQuantity(med);
+            const quantity = billQuantities[med.name] || calculateQuantity(med);
             return total + price * quantity; 
         }
         return total;
     }, 0);
+  }
+
+  const handleOpenBillDialog = (prescription: Prescription) => {
+    const initialQuantities = prescription.medications.reduce((acc, med) => {
+        acc[med.name] = calculateQuantity(med);
+        return acc;
+    }, {} as {[key: string]: number});
+    setBillQuantities(initialQuantities);
+  }
+
+  const handleUpdateBillQuantity = (medName: string, amount: number) => {
+    setBillQuantities(prev => {
+        const currentQuantity = prev[medName] || 0;
+        const newQuantity = Math.max(0, currentQuantity + amount); // Prevent negative quantity
+        return {
+            ...prev,
+            [medName]: newQuantity,
+        };
+    });
   }
 
 
@@ -229,7 +248,12 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                       </div>
                   </CardContent>
                   <CardFooter className='border-t p-2 flex gap-2'>
-                        <Dialog>
+                        <Dialog onOpenChange={(isOpen) => {
+                            if(isOpen) {
+                                const prescription = { medications: prescriptionToSend.medications } as Prescription;
+                                handleOpenBillDialog(prescription);
+                            }
+                        }}>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="w-full text-primary">
                                     <FileText className="mr-2 h-4 w-4" /> View Bill
@@ -248,13 +272,18 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         if (!medInfo || medInfo.status !== 'In Stock') return null;
                                         
                                         const price = medInfo.price;
-                                        const quantity = calculateQuantity(med);
+                                        const quantity = billQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className='flex items-center gap-2'>
                                                   <span className='capitalize'>{med.name}</span>
                                                 </div>
-                                                <span className='font-mono'>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, -1)}><Minus className="h-3 w-3" /></Button>
+                                                    <span className="font-semibold w-4 text-center">{quantity}</span>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, 1)}><Plus className="h-3 w-3" /></Button>
+                                                </div>
+                                                <span className='font-mono w-28 text-right'>
                                                    ₹{price.toFixed(2)} x {quantity} = ₹{(price * quantity).toFixed(2)}
                                                 </span>
                                             </div>
@@ -266,7 +295,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         <span className='font-mono'>₹{prescriptionToSend.medications.reduce((acc, med) => {
                                             const medInfo = getMedicineInfo(pharmacy, med.name);
                                             if (medInfo && medInfo.status === 'In Stock') {
-                                                return acc + (medInfo.price * calculateQuantity(med));
+                                                const quantity = billQuantities[med.name] || 0;
+                                                return acc + (medInfo.price * quantity);
                                             }
                                             return acc;
                                         }, 0).toFixed(2)}</span>
@@ -480,7 +510,11 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                   </CardContent>
                   {prescriptionToBill && medicinesToFind && (
                     <CardFooter className='border-t p-2 flex gap-2'>
-                       <Dialog>
+                       <Dialog onOpenChange={(isOpen) => {
+                           if (isOpen) {
+                               handleOpenBillDialog(prescriptionToBill)
+                           }
+                       }}>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="w-full text-primary">
                                     <FileText className="mr-2 h-4 w-4" /> View Bill
@@ -499,13 +533,18 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         if (!medInfo || medInfo.status !== 'In Stock') return null;
                                         
                                         const price = medInfo.price;
-                                        const quantity = calculateQuantity(med);
+                                        const quantity = billQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className='flex items-center gap-2'>
                                                   <span className='capitalize'>{med.name}</span>
                                                 </div>
-                                                <span className='font-mono'>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, -1)}><Minus className="h-3 w-3" /></Button>
+                                                    <span className="font-semibold w-4 text-center">{quantity}</span>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, 1)}><Plus className="h-3 w-3" /></Button>
+                                                </div>
+                                                <span className='font-mono w-28 text-right'>
                                                    ₹{price.toFixed(2)} x {quantity} = ₹{(price * quantity).toFixed(2)}
                                                 </span>
                                             </div>
@@ -544,4 +583,3 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
-
