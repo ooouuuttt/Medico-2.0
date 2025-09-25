@@ -336,9 +336,15 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="font-medium capitalize">{selectedMedicine.name}</p>
-                                    <p className="text-sm text-muted-foreground">Price: ₹{selectedMedicine.price} | In Stock: {selectedMedicine.quantity}</p>
+                                    <div className='flex items-center gap-2 text-sm'>
+                                        <p className="text-muted-foreground">Price: ₹{selectedMedicine.price}</p>
+                                        <Separator orientation='vertical' className='h-4'/>
+                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                                          {selectedMedicine.quantity > 0 ? "In Stock" : "Out of Stock"}
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <Button size="sm" onClick={handleOrder}>
+                                <Button size="sm" onClick={handleOrder} disabled={selectedMedicine.quantity === 0}>
                                     <ShoppingCart className="h-4 w-4 mr-2" />
                                     Order
                                 </Button>
@@ -470,5 +476,6 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
+
 
     
