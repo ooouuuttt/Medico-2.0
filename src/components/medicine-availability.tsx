@@ -280,8 +280,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         const maxQuantity = maxBillQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
-                                                <div className='flex items-center gap-2'>
-                                                  <span className='capitalize'>{med.name}</span>
+                                                <div className="w-2/5 break-words">
+                                                    <span className='capitalize'>{med.name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Button 
@@ -558,8 +558,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         const maxQuantity = maxBillQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
-                                                <div className='flex items-center gap-2'>
-                                                  <span className='capitalize'>{med.name}</span>
+                                                <div className="w-2/5 break-words">
+                                                    <span className='capitalize'>{med.name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Button 
