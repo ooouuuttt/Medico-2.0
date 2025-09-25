@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MedicalTabState, Tab } from './app-shell';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
 import { Prescription } from '@/lib/prescription-service';
 import { Medication } from '@/lib/user-service';
 
@@ -27,7 +27,7 @@ type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price:
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabTabState) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -135,8 +135,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     return medKey ? pharmacy.medicines[medKey] : null;
   }
   
-  const calculateQuantity = (med: Medication): number | null => {
-    if (!med.frequency || !med.days) return null;
+  const calculateQuantity = (med: Medication): number => {
+    if (!med.frequency || !med.days) return 1;
 
     let freqMultiplier = 0;
     const freqLower = med.frequency.toLowerCase();
@@ -150,6 +150,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         const match = freqLower.match(/(\d+)\s+time/);
         if (match) {
             freqMultiplier = parseInt(match[1], 10);
+        } else {
+            return 1; // Default to 1 if frequency is unparseable
         }
     }
 
@@ -159,7 +161,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         return freqMultiplier * numDays;
     }
 
-    return null;
+    return 1;
   };
 
   if (view === 'send-confirmation') {
@@ -354,7 +356,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     return prescription.medications.reduce((total, med) => {
         const medInfo = getMedicineInfo(pharmacy, med.name);
         const price = medInfo ? medInfo.price : 0;
-        const quantity = calculateQuantity(med) ?? 1;
+        const quantity = calculateQuantity(med);
         return total + price * quantity; 
     }, 0);
   }
@@ -412,7 +414,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                     <FileText className="mr-2 h-4 w-4" /> View Bill
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Estimated Bill at {pharmacy.name}</DialogTitle>
                                     <DialogDescription>
@@ -423,14 +425,15 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                     {prescriptionToBill.medications.map((med, i) => {
                                         const medInfo = getMedicineInfo(pharmacy, med.name);
                                         const price = medInfo ? medInfo.price : 0;
-                                        const quantity = calculateQuantity(med) ?? 1;
+                                        const quantity = calculateQuantity(med);
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className='flex items-center gap-2'>
                                                   <span className='capitalize'>{med.name}</span>
-                                                  <Badge variant="secondary" className='font-mono'>x {quantity}</Badge>
                                                 </div>
-                                                <span className='font-mono'>₹{(price * quantity).toFixed(2)}</span>
+                                                <span className='font-mono'>
+                                                   ₹{price.toFixed(2)} x {quantity} = ₹{(price * quantity).toFixed(2)}
+                                                </span>
                                             </div>
                                         )
                                     })}
@@ -440,6 +443,11 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         <span className='font-mono'>₹{calculateTotalBill(pharmacy, prescriptionToBill).toFixed(2)}</span>
                                     </div>
                                 </div>
+                                <DialogFooter>
+                                  <DialogClose asChild>
+                                      <Button type="button" variant="secondary">Close</Button>
+                                  </DialogClose>
+                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
                         <Separator orientation='vertical' className='h-6' />
@@ -462,7 +470,5 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
-
-    
 
     
