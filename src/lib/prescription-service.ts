@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -106,7 +107,7 @@ export const saveScannedPrescription = async (
       name: med.name,
       dosage: med.dosage,
       frequency: med.frequency,
-      duration: med.duration,
+      days: med.duration, // Note: AI flow uses 'duration', schema uses 'days'
     })),
   };
 

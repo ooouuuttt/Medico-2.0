@@ -191,7 +191,7 @@ const HealthRecords = ({ user }: HealthRecordsProps) => {
                         <div className="grid grid-cols-3 gap-2 text-muted-foreground mt-2">
                             <div><Badge variant="outline" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
                             <div><Badge variant="outline" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
-                             {med.duration && <div><Badge variant="outline" className='w-full justify-center text-center'>{med.duration}</Badge></div>}
+                             {med.days && <div><Badge variant="outline" className='w-full justify-center text-center'>{med.days} days</Badge></div>}
                         </div>
                         {med.notes && <p className="text-xs text-muted-foreground mt-2">Notes: {med.notes}</p>}
                     </div>

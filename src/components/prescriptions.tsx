@@ -77,8 +77,8 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
       doc.text(`${index + 1}. ${med.name} (${med.dosage})`, 15, yPos);
       doc.setFontSize(10);
       doc.text(`  - Frequency: ${med.frequency}`, 15, yPos + 7);
-      if(med.duration) {
-          doc.text(`  - Duration: ${med.duration}`, 15, yPos + 14);
+      if(med.days) {
+          doc.text(`  - Duration: ${med.days} days`, 15, yPos + 14);
           yPos += 21;
       } else {
           yPos += 14;
@@ -202,7 +202,7 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
                   <div className="flex flex-wrap gap-2 text-muted-foreground mt-2">
                       {med.dosage && <div><Badge variant="outline">{med.dosage}</Badge></div>}
                       {med.frequency && <div><Badge variant="outline">{med.frequency}</Badge></div>}
-                      {med.duration && <div><Badge variant="outline">{med.duration}</Badge></div>}
+                      {med.days && <div><Badge variant="outline">{med.days} days</Badge></div>}
                   </div>
                    {med.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">Notes: {med.notes}</p>}
                 </div>

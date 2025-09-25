@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -188,7 +189,7 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
                                     <div className="grid grid-cols-3 gap-2 text-muted-foreground">
                                         <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.dosage}</Badge></div>
                                         <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.frequency}</Badge></div>
-                                        <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.duration}</Badge></div>
+                                        <div><Badge variant="secondary" className='w-full justify-center text-center'>{med.duration} days</Badge></div>
                                     </div>
                                     {availablePharmacies.length > 0 && (
                                         <div className='mt-3 pt-3 border-t'>
