@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -34,6 +35,7 @@ import ChatList from './chat-list';
 import ChatConsultation from './chat-consultation';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { createNotification } from '@/lib/notification-service';
+import { Prescription } from '@/lib/prescription-service';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat';
 
@@ -41,6 +43,7 @@ export interface MedicalTabState {
   pharmacy?: Pharmacy;
   medicineName?: string;
   medicinesToFind?: string[]; // For finding all medicines in a prescription
+  prescriptionToBill?: Prescription; // For viewing a bill for a prescription
   prescriptionToSend?: { doctorName: string; date: string, medications: Medication[] }; // For sending a prescription
 }
 
@@ -291,3 +294,5 @@ export default function AppShell({ user }: AppShellProps) {
     </div>
   );
 }
+
+    

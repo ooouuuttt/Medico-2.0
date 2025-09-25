@@ -113,7 +113,10 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   const handleFindPharmacies = () => {
     if (!selectedPrescription || selectedMedicines.length === 0) return;
     const medicineNames = selectedMedicines.map(med => med.name);
-    setActiveTab('medical', { medicinesToFind: medicineNames });
+    setActiveTab('medical', { 
+        medicinesToFind: medicineNames,
+        prescriptionToBill: selectedPrescription,
+    });
     setIsOrderDialogOpen(false);
   }
 

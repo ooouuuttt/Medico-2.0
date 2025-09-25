@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { pharmacies, Pharmacy } from '@/lib/dummy-data';
@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MedicalTabState, Tab } from './app-shell';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Prescription } from '@/lib/prescription-service';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
@@ -36,11 +38,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>(pharmacies);
   const { toast } = useToast();
 
+  const medicinesToFind = initialState?.medicinesToFind;
+  const prescriptionToBill = initialState?.prescriptionToBill;
+
   useEffect(() => {
-    if (initialState?.medicinesToFind) {
-      setSearchTerm(initialState.medicinesToFind.join(', '));
+    if (medicinesToFind) {
+      setSearchTerm(medicinesToFind.join(', '));
       const pharmaciesWithAllMeds = pharmacies.filter(pharmacy =>
-        initialState.medicinesToFind!.every(medName =>
+        medicinesToFind.every(medName =>
           Object.keys(pharmacy.medicines).some(
             (m) => m.toLowerCase().includes(medName.toLowerCase()) && pharmacy.medicines[m].status === 'In Stock'
           )
@@ -69,7 +74,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         : pharmacies;
         setFilteredPharmacies(f);
     }
-  }, [initialState, searchTerm]);
+  }, [initialState, searchTerm, medicinesToFind]);
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
@@ -317,6 +322,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     )
   }
 
+  const calculateTotalBill = (pharmacy: Pharmacy, prescription: Prescription) => {
+    return prescription.medications.reduce((total, med) => {
+        const medInfo = getMedicineInfo(pharmacy, med.name);
+        const price = medInfo ? medInfo.price : 0;
+        return total + price; // Note: This doesn't account for quantity yet.
+    }, 0);
+  }
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -330,18 +343,18 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         />
       </div>
       
-      {initialState?.medicinesToFind && (
+      {medicinesToFind && (
         <p className="text-sm text-muted-foreground">Showing pharmacies that have all prescribed medicines in stock.</p>
       )}
 
       <div className="space-y-4 max-h-[60vh] overflow-y-auto">
         {filteredPharmacies.length > 0 ? (
           filteredPharmacies.map((pharmacy) => {
-            const medInfo = searchTerm && !initialState?.medicinesToFind ? getMedicineInfo(pharmacy, searchTerm) : null;
+            const medInfo = searchTerm && !medicinesToFind ? getMedicineInfo(pharmacy, searchTerm) : null;
             return (
-              <Card key={pharmacy.id} className="rounded-xl shadow-sm cursor-pointer" onClick={() => handleSelectPharmacy(pharmacy)}>
-                  <CardContent className="p-4 flex items-center justify-between">
-                      <div>
+              <Card key={pharmacy.id} className="rounded-xl shadow-sm">
+                  <CardContent className="p-4 flex items-start justify-between" onClick={() => handleSelectPharmacy(pharmacy)}>
+                      <div className="cursor-pointer flex-grow">
                           <h3 className="font-semibold">{pharmacy.name}</h3>
                           <div className="flex items-center text-sm text-muted-foreground">
                               <MapPin className="w-3.5 h-3.5 mr-1" />
@@ -362,6 +375,46 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                          </div>
                       )}
                   </CardContent>
+                  {prescriptionToBill && medicinesToFind && (
+                    <CardFooter className='border-t p-2 flex gap-2'>
+                       <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="w-full text-primary">
+                                    <FileText className="mr-2 h-4 w-4" /> View Bill
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Estimated Bill at {pharmacy.name}</DialogTitle>
+                                    <DialogDescription>
+                                        This is an estimate for the prescribed medicines.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2 py-4">
+                                    {prescriptionToBill.medications.map((med, i) => {
+                                        const medInfo = getMedicineInfo(pharmacy, med.name);
+                                        const price = medInfo ? medInfo.price : 0;
+                                        return (
+                                            <div key={i} className="flex justify-between items-center text-sm">
+                                                <span className='capitalize'>{med.name}</span>
+                                                <span className='font-mono'>₹{price.toFixed(2)}</span>
+                                            </div>
+                                        )
+                                    })}
+                                    <Separator className='my-2'/>
+                                     <div className="flex justify-between items-center font-bold text-base">
+                                        <span>Total</span>
+                                        <span className='font-mono'>₹{calculateTotalBill(pharmacy, prescriptionToBill).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                        <Separator orientation='vertical' className='h-6' />
+                        <Button variant="ghost" size="sm" className="w-full text-primary" onClick={() => handleSelectPharmacyForSending(pharmacy)}>
+                            <Send className="mr-2 h-4 w-4" /> Send
+                        </Button>
+                    </CardFooter>
+                  )}
               </Card>
             )
           })
@@ -376,3 +429,5 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
+
+    
