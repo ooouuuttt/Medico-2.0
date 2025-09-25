@@ -112,10 +112,18 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
   
   const handleFindPharmacies = () => {
     if (!selectedPrescription || selectedMedicines.length === 0) return;
+    
     const medicineNames = selectedMedicines.map(med => med.name);
+    
+    // Create a new prescription object containing only the selected medicines
+    const prescriptionForBill: Prescription = {
+        ...selectedPrescription,
+        medications: selectedMedicines,
+    };
+
     setActiveTab('medical', { 
         medicinesToFind: medicineNames,
-        prescriptionToBill: selectedPrescription,
+        prescriptionToBill: prescriptionForBill,
     });
     setIsOrderDialogOpen(false);
   }
@@ -320,5 +328,6 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
 };
 
 export default Prescriptions;
+
 
     
