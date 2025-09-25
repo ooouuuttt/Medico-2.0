@@ -27,7 +27,7 @@ type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price:
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabDState) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -346,7 +346,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                     <div className='flex items-center gap-2 text-sm'>
                                         <p className="text-muted-foreground">Price: ₹{selectedMedicine.price}</p>
                                         <Separator orientation='vertical' className='h-4'/>
-                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800", selectedMedicine.quantity <= 0 && "text-red-800")}>
+                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800", "font-semibold")}>
                                           {selectedMedicine.quantity > 0 ? "In Stock" : "Out of Stock"}
                                         </Badge>
                                     </div>
@@ -368,9 +368,12 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const calculateTotalBill = (pharmacy: Pharmacy, prescription: Prescription) => {
     return prescription.medications.reduce((total, med) => {
         const medInfo = getMedicineInfo(pharmacy, med.name);
-        const price = medInfo ? medInfo.price : 0;
-        const quantity = calculateQuantity(med);
-        return total + price * quantity; 
+        if (medInfo && medInfo.status === 'In Stock') {
+            const price = medInfo.price;
+            const quantity = calculateQuantity(med);
+            return total + price * quantity; 
+        }
+        return total;
     }, 0);
   }
 
@@ -437,7 +440,9 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                 <div className="space-y-2 py-4">
                                     {prescriptionToBill.medications.map((med, i) => {
                                         const medInfo = getMedicineInfo(pharmacy, med.name);
-                                        const price = medInfo ? medInfo.price : 0;
+                                        if (!medInfo || medInfo.status !== 'In Stock') return null;
+                                        
+                                        const price = medInfo.price;
                                         const quantity = calculateQuantity(med);
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
@@ -484,3 +489,4 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 
 export default MedicineAvailability;
 
+    
