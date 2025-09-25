@@ -145,6 +145,33 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
     }
   }
 
+  const calculateQuantity = (med: Medication): number | null => {
+    if (!med.frequency || !med.days) return null;
+
+    let freqMultiplier = 0;
+    const freqLower = med.frequency.toLowerCase();
+    if (freqLower.includes('once')) {
+        freqMultiplier = 1;
+    } else if (freqLower.includes('twice')) {
+        freqMultiplier = 2;
+    } else if (freqLower.includes('thrice')) {
+        freqMultiplier = 3;
+    } else {
+        const match = freqLower.match(/(\d+)\s+time/);
+        if (match) {
+            freqMultiplier = parseInt(match[1], 10);
+        }
+    }
+
+    const numDays = parseInt(med.days, 10);
+
+    if (freqMultiplier > 0 && !isNaN(numDays)) {
+        return freqMultiplier * numDays;
+    }
+
+    return null;
+  };
+
 
   if (isLoading) {
     return (
@@ -241,16 +268,24 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
                         <Checkbox id="select-all" checked={allSelected} onCheckedChange={(checked) => handleSelectAll(Boolean(checked))} />
                         <Label htmlFor="select-all" className='font-semibold'>Select All</Label>
                     </div>
-                    {selectedPrescription?.medications.map(m => (
-                        <div key={m.name} className="flex items-center space-x-2">
-                            <Checkbox 
-                                id={m.name} 
-                                checked={selectedMedicines.some(sm => sm.name === m.name)}
-                                onCheckedChange={(checked) => handleMedicineSelection(m, Boolean(checked))}
-                            />
-                            <Label htmlFor={m.name} className='capitalize text-sm font-normal'>{m.name}</Label>
-                        </div>
-                    ))}
+                    {selectedPrescription?.medications.map(m => {
+                        const quantity = calculateQuantity(m);
+                        return (
+                          <div key={m.name} className="flex items-center space-x-3">
+                              <Checkbox 
+                                  id={m.name} 
+                                  checked={selectedMedicines.some(sm => sm.name === m.name)}
+                                  onCheckedChange={(checked) => handleMedicineSelection(m, Boolean(checked))}
+                              />
+                              <Label htmlFor={m.name} className='capitalize text-sm font-normal flex-grow'>
+                                  {m.name}
+                              </Label>
+                              {quantity !== null && (
+                                <Badge variant="secondary" className="font-mono">Qty: {quantity}</Badge>
+                              )}
+                          </div>
+                        )
+                    })}
                 </div>
                 <Separator />
                 <div className='py-4 space-y-4'>
