@@ -20,13 +20,14 @@ import {
 import { MedicalTabState, Tab } from './app-shell';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Prescription } from '@/lib/prescription-service';
+import { Medication } from '@/lib/user-service';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
 type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabTabState) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -133,6 +134,33 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     const medKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(medName.toLowerCase()));
     return medKey ? pharmacy.medicines[medKey] : null;
   }
+  
+  const calculateQuantity = (med: Medication): number | null => {
+    if (!med.frequency || !med.days) return null;
+
+    let freqMultiplier = 0;
+    const freqLower = med.frequency.toLowerCase();
+    if (freqLower.includes('once')) {
+        freqMultiplier = 1;
+    } else if (freqLower.includes('twice')) {
+        freqMultiplier = 2;
+    } else if (freqLower.includes('thrice')) {
+        freqMultiplier = 3;
+    } else {
+        const match = freqLower.match(/(\d+)\s+time/);
+        if (match) {
+            freqMultiplier = parseInt(match[1], 10);
+        }
+    }
+
+    const numDays = parseInt(med.days, 10);
+
+    if (freqMultiplier > 0 && !isNaN(numDays)) {
+        return freqMultiplier * numDays;
+    }
+
+    return null;
+  };
 
   if (view === 'send-confirmation') {
     return (
@@ -326,7 +354,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     return prescription.medications.reduce((total, med) => {
         const medInfo = getMedicineInfo(pharmacy, med.name);
         const price = medInfo ? medInfo.price : 0;
-        return total + price; // Note: This doesn't account for quantity yet.
+        const quantity = calculateQuantity(med) ?? 1;
+        return total + price * quantity; 
     }, 0);
   }
 
@@ -394,10 +423,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                     {prescriptionToBill.medications.map((med, i) => {
                                         const medInfo = getMedicineInfo(pharmacy, med.name);
                                         const price = medInfo ? medInfo.price : 0;
+                                        const quantity = calculateQuantity(med) ?? 1;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
-                                                <span className='capitalize'>{med.name}</span>
-                                                <span className='font-mono'>₹{price.toFixed(2)}</span>
+                                                <div className='flex items-center gap-2'>
+                                                  <span className='capitalize'>{med.name}</span>
+                                                  <Badge variant="secondary" className='font-mono'>x {quantity}</Badge>
+                                                </div>
+                                                <span className='font-mono'>₹{(price * quantity).toFixed(2)}</span>
                                             </div>
                                         )
                                     })}
@@ -429,5 +462,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
+
+    
 
     
