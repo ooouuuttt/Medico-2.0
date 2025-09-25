@@ -27,7 +27,7 @@ type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price:
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabDState) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -43,16 +43,23 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const prescriptionToBill = initialState?.prescriptionToBill;
 
   useEffect(() => {
-    if (medicinesToFind) {
+    if (medicinesToFind && medicinesToFind.length > 0) {
       setSearchTerm(medicinesToFind.join(', '));
-      const pharmaciesWithAllMeds = pharmacies.filter(pharmacy =>
-        medicinesToFind.every(medName =>
-          Object.keys(pharmacy.medicines).some(
-            (m) => m.toLowerCase().includes(medName.toLowerCase()) && pharmacy.medicines[m].status === 'In Stock'
-          )
-        )
-      );
-      setFilteredPharmacies(pharmaciesWithAllMeds);
+      
+      const sortedPharmacies = [...pharmacies]
+        .map(pharmacy => {
+          const matchCount = medicinesToFind.reduce((count, medName) => {
+            const hasMed = Object.keys(pharmacy.medicines).some(
+              (m) => m.toLowerCase().includes(medName.toLowerCase()) && pharmacy.medicines[m].status === 'In Stock'
+            );
+            return count + (hasMed ? 1 : 0);
+          }, 0);
+          return { ...pharmacy, matchCount };
+        })
+        .filter(p => p.matchCount > 0) // Only show pharmacies that have at least one medicine
+        .sort((a, b) => b.matchCount - a.matchCount);
+
+      setFilteredPharmacies(sortedPharmacies);
     } else if (initialState?.prescriptionToSend) {
         setView('send-prescription');
     } else if (initialState?.pharmacy && initialState?.medicineName) {
@@ -75,7 +82,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         : pharmacies;
         setFilteredPharmacies(f);
     }
-  }, [initialState, searchTerm, medicinesToFind]);
+  }, [initialState, searchTerm]);
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
@@ -339,7 +346,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                     <div className='flex items-center gap-2 text-sm'>
                                         <p className="text-muted-foreground">Price: ₹{selectedMedicine.price}</p>
                                         <Separator orientation='vertical' className='h-4'/>
-                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>
+                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800", selectedMedicine.quantity <= 0 && "text-red-800")}>
                                           {selectedMedicine.quantity > 0 ? "In Stock" : "Out of Stock"}
                                         </Badge>
                                     </div>
@@ -404,7 +411,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                       </div>
                       {medInfo && (
                          <div className='text-right'>
-                            <Badge variant={medInfo.status === 'In Stock' ? 'default' : 'destructive'} className='bg-green-100 text-green-800'>
+                            <Badge variant={medInfo.status === 'In Stock' ? 'default' : 'destructive'} className={cn('capitalize', medInfo.status === 'In Stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
                                 {medInfo.status === 'In Stock' ? <CheckCircle className='w-3 h-3 mr-1.5'/> : <XCircle className='w-3 h-3 mr-1.5'/>}
                                 {medInfo.status}
                             </Badge>
@@ -477,5 +484,3 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 
 export default MedicineAvailability;
 
-
-    
