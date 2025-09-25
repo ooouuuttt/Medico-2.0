@@ -38,6 +38,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>(pharmacies);
   const { toast } = useToast();
   const [billQuantities, setBillQuantities] = useState<{[key: string]: number}>({});
+  const [maxBillQuantities, setMaxBillQuantities] = useState<{[key: string]: number}>({});
 
   const medicinesToFind = initialState?.medicinesToFind;
   const prescriptionToBill = initialState?.prescriptionToBill;
@@ -187,16 +188,19 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 
   const handleOpenBillDialog = (prescription: Prescription) => {
     const initialQuantities = prescription.medications.reduce((acc, med) => {
-        acc[med.name] = calculateQuantity(med);
+        const qty = calculateQuantity(med);
+        acc[med.name] = qty;
         return acc;
     }, {} as {[key: string]: number});
     setBillQuantities(initialQuantities);
+    setMaxBillQuantities(initialQuantities); // Store the initial quantities as the max
   }
 
   const handleUpdateBillQuantity = (medName: string, amount: number) => {
     setBillQuantities(prev => {
         const currentQuantity = prev[medName] || 0;
-        const newQuantity = Math.max(0, currentQuantity + amount); // Prevent negative quantity
+        const maxQuantity = maxBillQuantities[medName] || currentQuantity;
+        const newQuantity = Math.max(1, Math.min(currentQuantity + amount, maxQuantity));
         return {
             ...prev,
             [medName]: newQuantity,
@@ -273,17 +277,34 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         
                                         const price = medInfo.price;
                                         const quantity = billQuantities[med.name] || 0;
+                                        const maxQuantity = maxBillQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className='flex items-center gap-2'>
                                                   <span className='capitalize'>{med.name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, -1)}><Minus className="h-3 w-3" /></Button>
-                                                    <span className="font-semibold w-4 text-center">{quantity}</span>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, 1)}><Plus className="h-3 w-3" /></Button>
+                                                    <Button 
+                                                      variant="ghost" 
+                                                      size="icon" 
+                                                      className="h-6 w-6 text-red-500 hover:text-red-600" 
+                                                      onClick={() => handleUpdateBillQuantity(med.name, -1)}
+                                                      disabled={quantity <= 1}
+                                                    >
+                                                        <Minus className="h-3 w-3" />
+                                                    </Button>
+                                                    <span className="font-semibold w-8 text-center border rounded-md px-2 py-0.5">{quantity}</span>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-6 w-6 text-green-500 hover:text-green-600" 
+                                                        onClick={() => handleUpdateBillQuantity(med.name, 1)}
+                                                        disabled={quantity >= maxQuantity}
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                    </Button>
                                                 </div>
-                                                <span className='font-mono w-28 text-right'>
+                                                <span className='font-mono w-32 text-right'>
                                                    ₹{price.toFixed(2)} x {quantity} = ₹{(price * quantity).toFixed(2)}
                                                 </span>
                                             </div>
@@ -534,17 +555,34 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         
                                         const price = medInfo.price;
                                         const quantity = billQuantities[med.name] || 0;
+                                        const maxQuantity = maxBillQuantities[med.name] || 0;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className='flex items-center gap-2'>
                                                   <span className='capitalize'>{med.name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, -1)}><Minus className="h-3 w-3" /></Button>
-                                                    <span className="font-semibold w-4 text-center">{quantity}</span>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleUpdateBillQuantity(med.name, 1)}><Plus className="h-3 w-3" /></Button>
+                                                    <Button 
+                                                      variant="ghost" 
+                                                      size="icon" 
+                                                      className="h-6 w-6 text-red-500 hover:text-red-600" 
+                                                      onClick={() => handleUpdateBillQuantity(med.name, -1)}
+                                                      disabled={quantity <= 1}
+                                                    >
+                                                        <Minus className="h-3 w-3" />
+                                                    </Button>
+                                                    <span className="font-semibold w-8 text-center border rounded-md px-2 py-0.5">{quantity}</span>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-6 w-6 text-green-500 hover:text-green-600" 
+                                                        onClick={() => handleUpdateBillQuantity(med.name, 1)}
+                                                        disabled={quantity >= maxQuantity}
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                    </Button>
                                                 </div>
-                                                <span className='font-mono w-28 text-right'>
+                                                <span className='font-mono w-32 text-right'>
                                                    ₹{price.toFixed(2)} x {quantity} = ₹{(price * quantity).toFixed(2)}
                                                 </span>
                                             </div>
