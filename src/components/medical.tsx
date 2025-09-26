@@ -4,13 +4,15 @@
 import { Pill } from "lucide-react";
 import MedicineAvailability from "./medicine-availability";
 import { MedicalTabState, Tab } from "./app-shell";
+import { User } from "firebase/auth";
 
 interface MedicalProps {
   initialState?: MedicalTabState;
   setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+  user: User;
 }
 
-const Medical = ({ initialState, setActiveTab }: MedicalProps) => {
+const Medical = ({ initialState, setActiveTab, user }: MedicalProps) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="text-center space-y-2">
@@ -20,7 +22,7 @@ const Medical = ({ initialState, setActiveTab }: MedicalProps) => {
           Find pharmacies and order medicines online.
         </p>
       </div>
-      <MedicineAvailability initialState={initialState} setActiveTab={setActiveTab} />
+      <MedicineAvailability initialState={initialState} setActiveTab={setActiveTab} user={user} />
     </div>
   );
 };

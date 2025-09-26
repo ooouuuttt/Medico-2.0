@@ -23,16 +23,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Prescription } from '@/lib/prescription-service';
 import { Medication } from '@/lib/user-service';
 import { Skeleton } from './ui/skeleton';
+import { User } from 'firebase/auth';
+import { createOrder } from '@/lib/order-service';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
-type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
+export type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
   setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+  user: User;
 }
 
-const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
+const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvailabilityProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
@@ -153,8 +156,19 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     setView('payment');
   }
 
-  const handlePayment = () => {
-    setView('confirmation');
+  const handlePayment = async () => {
+    if (!cartItem) return;
+    try {
+      await createOrder(user.uid, cartItem);
+      setView('confirmation');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Order Failed',
+        description: 'Could not place your order. Please try again.',
+      });
+    }
   };
 
   const handleReset = () => {
@@ -421,15 +435,13 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
           <strong>{cartItem?.pharmacy?.pharmacyName}</strong> has been placed.
         </p>
         <p className="text-sm text-muted-foreground">
-          You will receive a notification when it's ready for collection.
+          You can track the status in the "Order History" section.
         </p>
         <Button
-          onClick={handleReset}
-          variant="outline"
+          onClick={() => setActiveTab('order-history')}
           className="mt-4"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Order another medicine
+          View Order History
         </Button>
       </div>
     );
@@ -693,4 +705,3 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
-

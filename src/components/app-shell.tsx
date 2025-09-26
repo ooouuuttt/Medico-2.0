@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -36,8 +36,9 @@ import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firest
 import { createNotification } from '@/lib/notification-service';
 import { Prescription } from '@/lib/prescription-service';
 import { Pharmacy } from '@/lib/pharmacy-service';
+import OrderHistory from './order-history';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat' | 'order-history';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
@@ -174,8 +175,10 @@ export default function AppShell({ user }: AppShellProps) {
         return <HealthRecords user={user} />;
       case 'appointments':
         return <Appointments user={user} setActiveTab={handleSetActiveTab} />;
+      case 'order-history':
+        return <OrderHistory user={user} setActiveTab={handleSetActiveTab} />;
       case 'medical':
-        return <Medical initialState={medicalTabState} setActiveTab={handleSetActiveTab} />;
+        return <Medical initialState={medicalTabState} setActiveTab={handleSetActiveTab} user={user} />;
       case 'scan-prescription':
         return <PrescriptionReader user={user} setActiveTab={handleSetActiveTab} />;
       case 'prescriptions':
@@ -255,6 +258,10 @@ export default function AppShell({ user }: AppShellProps) {
                   <CalendarCheck className="mr-2 h-4 w-4" />
                   <span>{t('appointments')}</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTab('order-history')}>
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  <span>Order History</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -294,5 +301,3 @@ export default function AppShell({ user }: AppShellProps) {
     </div>
   );
 }
-
-    
