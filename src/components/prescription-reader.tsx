@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ScanText, Upload, Activity, AlertTriangle, CheckCircle, MapPin, ShoppingCart, Save } from 'lucide-react';
 import { Button } from './ui/button';
