@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,7 +29,7 @@ type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabTab) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -472,7 +473,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                           {(selectedPharmacy.stock || []).map((medicine) => (
-                            <DropdownMenuItem key={medicine.name} onClick={() => handleSelectMedicine(medicine)}>
+                            <DropdownMenuItem key={`${medicine.name}-${medicine.manufacturer}`} onClick={() => handleSelectMedicine(medicine)}>
                                 <span className='capitalize'>{medicine.name}</span>
                             </DropdownMenuItem>
                           ))}
