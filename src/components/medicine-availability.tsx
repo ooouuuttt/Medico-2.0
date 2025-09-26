@@ -121,7 +121,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   };
 
   const handleSelectMedicine = (medicine: Medicine) => {
-    setSelectedMedicine(medicine);
+    // Find the best version of this medicine in stock (one with quantity > 0)
+    const inStockVersion = selectedPharmacy?.stock?.find(m => 
+        m.name === medicine.name && 
+        m.manufacturer === medicine.manufacturer && 
+        m.price === medicine.price &&
+        m.quantity > 0
+    ) || medicine; // fallback to the selected one if none are in stock
+    setSelectedMedicine(inStockVersion);
   }
 
   const handleOrder = () => {
@@ -225,12 +232,15 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 
   const getUniqueMedicines = (stock: Medicine[] | undefined) => {
     if (!stock) return [];
-    const unique = stock.filter((medicine, index, self) =>
-        index === self.findIndex((t) => (
-            t.name === medicine.name && t.manufacturer === medicine.manufacturer && t.price === medicine.price
-        ))
-    );
-    return unique;
+    const uniqueMedicinesMap = new Map<string, Medicine>();
+    stock.forEach(medicine => {
+        const key = `${medicine.name}-${medicine.manufacturer}-${medicine.price}`;
+        // Prioritize showing an in-stock item if available
+        if (!uniqueMedicinesMap.has(key) || (uniqueMedicinesMap.get(key)!.quantity === 0 && medicine.quantity > 0)) {
+            uniqueMedicinesMap.set(key, medicine);
+        }
+    });
+    return Array.from(uniqueMedicinesMap.values());
   };
 
   if (isLoading) {
