@@ -473,7 +473,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                           {(selectedPharmacy.stock || []).map((medicine) => (
-                            <DropdownMenuItem key={`${medicine.name}-${medicine.manufacturer}`} onClick={() => handleSelectMedicine(medicine)}>
+                            <DropdownMenuItem key={medicine.id} onClick={() => handleSelectMedicine(medicine)}>
                                 <span className='capitalize'>{medicine.name}</span>
                             </DropdownMenuItem>
                           ))}
@@ -656,3 +656,4 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
 };
 
 export default MedicineAvailability;
+
