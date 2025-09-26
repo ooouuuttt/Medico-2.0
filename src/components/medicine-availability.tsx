@@ -24,7 +24,7 @@ import { Prescription } from '@/lib/prescription-service';
 import { Medication } from '@/lib/user-service';
 import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
-import { createOrder } from '@/lib/order-service';
+import { createOrder, OrderItem } from '@/lib/order-service';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
 export type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
@@ -113,14 +113,36 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
     setView('pharmacy');
   };
   
-  const handleSelectPharmacyForSending = (pharmacy: Pharmacy) => {
-    setSelectedPharmacy(pharmacy);
-    // Simulate sending prescription
-    toast({
-        title: "Prescription Sent",
-        description: `Your prescription has been sent to ${pharmacy.pharmacyName}. They will contact you shortly.`,
+  const handleSelectPharmacyForSending = async (pharmacy: Pharmacy) => {
+    if (!prescriptionToBill) return;
+
+    const items: OrderItem[] = prescriptionToBill.medications.map(med => {
+        const medInfo = getMedicineInfo(pharmacy, med.name);
+        const quantity = billQuantities[med.name] || calculateQuantity(med);
+        return {
+            medicine: {
+                name: med.name,
+                manufacturer: medInfo?.manufacturer || 'N/A',
+                price: medInfo?.price || 0,
+            },
+            quantity: quantity,
+        };
     });
-    setView('send-confirmation');
+
+    const total = calculateTotalBill(pharmacy, prescriptionToBill);
+
+    try {
+        await createOrder(user.uid, pharmacy, items, total, 'prescription');
+        setSelectedPharmacy(pharmacy);
+        setView('send-confirmation');
+    } catch (error) {
+        console.error("Error sending prescription:", error);
+        toast({
+            variant: "destructive",
+            title: "Send Failed",
+            description: "Could not send the prescription. Please try again.",
+        });
+    }
   };
 
   const handleSelectMedicine = (medicine: Medicine) => {
@@ -159,7 +181,17 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
   const handlePayment = async () => {
     if (!cartItem) return;
     try {
-      await createOrder(user.uid, cartItem);
+      const items: OrderItem[] = [{
+        medicine: {
+          id: cartItem.medicine.id,
+          name: cartItem.medicine.name,
+          manufacturer: cartItem.medicine.manufacturer,
+          price: cartItem.medicine.price
+        },
+        quantity: cartItem.quantity
+      }];
+      const total = cartItem.medicine.price * cartItem.quantity;
+      await createOrder(user.uid, cartItem.pharmacy, items, total, 'single_med');
       setView('confirmation');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -297,7 +329,7 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
             <Send className="h-16 w-16 text-green-500" />
             <h2 className="text-2xl font-bold font-headline">Prescription Sent!</h2>
             <p className="text-muted-foreground">
-                Your prescription from <strong>Dr. {prescriptionToSend?.doctorName}</strong> has been sent to <strong>{selectedPharmacy?.pharmacyName}</strong>.
+                Your prescription from <strong>Dr. {prescriptionToSend?.doctorName || prescriptionToBill?.doctorName}</strong> has been sent to <strong>{selectedPharmacy?.pharmacyName}</strong>.
             </p>
             <p className="text-sm text-muted-foreground">
                 The pharmacy will contact you shortly to confirm your order.

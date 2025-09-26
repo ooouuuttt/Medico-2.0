@@ -15,49 +15,64 @@ import {
 import { db } from './firebase';
 import type { CartItem } from '@/components/medicine-availability';
 import { createNotification } from './notification-service';
+import { Medication } from './user-service';
+import { Pharmacy } from './pharmacy-service';
 
 export type OrderStatus = 'pending' | 'ready' | 'completed';
+export type OrderType = 'single_med' | 'prescription';
+
+export interface OrderItem {
+  medicine: {
+    id?: string;
+    name: string;
+    manufacturer: string;
+    price: number;
+  };
+  quantity: number;
+}
 
 export interface Order extends DocumentData {
   id: string;
   userId: string;
   pharmacyId: string;
   pharmacyName: string;
-  items: CartItem[];
+  items: OrderItem[];
   total: number;
   status: OrderStatus;
   createdAt: Timestamp;
+  type: OrderType;
 }
 
-// Function to create a new order
-export const createOrder = async (userId: string, cartItem: CartItem): Promise<string> => {
+// Function to create a new order (for single medicine or full prescription)
+export const createOrder = async (
+  userId: string,
+  pharmacy: Pharmacy,
+  items: OrderItem[],
+  total: number,
+  type: OrderType
+): Promise<string> => {
   try {
     const orderData = {
       userId,
-      pharmacyId: cartItem.pharmacy.id,
-      pharmacyName: cartItem.pharmacy.pharmacyName,
-      items: [
-        {
-          medicine: {
-             id: cartItem.medicine.id,
-             name: cartItem.medicine.name,
-             manufacturer: cartItem.medicine.manufacturer,
-             price: cartItem.medicine.price
-          },
-          quantity: cartItem.quantity
-        }
-      ],
-      total: cartItem.medicine.price * cartItem.quantity,
+      pharmacyId: pharmacy.id,
+      pharmacyName: pharmacy.pharmacyName,
+      items,
+      total,
       status: 'pending' as OrderStatus,
       createdAt: serverTimestamp(),
+      type,
     };
 
     const docRef = await addDoc(collection(db, 'orders'), orderData);
     
-    // Create notification for the user
+    const notificationTitle = type === 'prescription' ? 'Prescription Sent!' : 'Order Placed!';
+    const notificationDesc = type === 'prescription' 
+      ? `Your prescription has been sent to ${pharmacy.pharmacyName}.`
+      : `Your order from ${pharmacy.pharmacyName} has been placed.`;
+
     await createNotification(userId, {
-      title: 'Order Placed!',
-      description: `Your order from ${cartItem.pharmacy.pharmacyName} has been placed.`,
+      title: notificationTitle,
+      description: notificationDesc,
       type: 'medicine',
     });
 
@@ -67,6 +82,7 @@ export const createOrder = async (userId: string, cartItem: CartItem): Promise<s
     throw new Error('Failed to create order.');
   }
 };
+
 
 // Function to get all orders for a user
 export const getOrdersForUser = (
