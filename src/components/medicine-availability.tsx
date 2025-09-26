@@ -234,11 +234,11 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     if (!stock) return [];
     const uniqueMedicinesMap = new Map<string, Medicine>();
     stock.forEach(medicine => {
-        const key = `${medicine.name}-${medicine.manufacturer}-${medicine.price}`;
-        // Prioritize showing an in-stock item if available
-        if (!uniqueMedicinesMap.has(key) || (uniqueMedicinesMap.get(key)!.quantity === 0 && medicine.quantity > 0)) {
-            uniqueMedicinesMap.set(key, medicine);
-        }
+      const key = `${medicine.name}-${medicine.manufacturer}-${medicine.price}`;
+      // Only add if it's not already in the map
+      if (!uniqueMedicinesMap.has(key)) {
+        uniqueMedicinesMap.set(key, medicine);
+      }
     });
     return Array.from(uniqueMedicinesMap.values());
   };
@@ -488,14 +488,20 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="w-full justify-between">
-                            <span className='capitalize'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
+                            <div className='flex flex-col items-start'>
+                                <span className='capitalize font-semibold'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
+                                {selectedMedicine && <span className='text-xs text-muted-foreground'>{selectedMedicine.manufacturer}</span>}
+                            </div>
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                            {uniqueMedicines.map((medicine) => (
-                            <DropdownMenuItem key={medicine.id} onClick={() => handleSelectMedicine(medicine)}>
-                                <span className='capitalize'>{medicine.name}</span>
+                            <DropdownMenuItem key={`${medicine.name}-${medicine.manufacturer}-${medicine.price}`} onClick={() => handleSelectMedicine(medicine)}>
+                                <div>
+                                    <span className='capitalize font-semibold'>{medicine.name}</span>
+                                    <p className='text-xs text-muted-foreground'>{medicine.manufacturer}</p>
+                                </div>
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
