@@ -29,7 +29,7 @@ type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
-  setActiveTab: (tab: Tab, state?: MedicalTabTab) => void;
+  setActiveTab: (tab: Tab, state?: MedicalTabState) => void;
 }
 
 const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabilityProps) => {
@@ -222,6 +222,16 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         };
     });
   }
+
+  const getUniqueMedicines = (stock: Medicine[] | undefined) => {
+    if (!stock) return [];
+    const unique = stock.filter((medicine, index, self) =>
+        index === self.findIndex((t) => (
+            t.name === medicine.name && t.manufacturer === medicine.manufacturer && t.price === medicine.price
+        ))
+    );
+    return unique;
+  };
 
   if (isLoading) {
     return (
@@ -447,6 +457,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   }
 
   if (view === 'pharmacy' && selectedPharmacy) {
+    const uniqueMedicines = getUniqueMedicines(selectedPharmacy.stock);
     return (
         <div className="animate-in fade-in duration-500">
              <Button variant="ghost" size="sm" onClick={() => { setView('list'); setSelectedPharmacy(null); }} className="mb-4">
@@ -472,7 +483,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                          {(selectedPharmacy.stock || []).map((medicine) => (
+                           {uniqueMedicines.map((medicine) => (
                             <DropdownMenuItem key={medicine.id} onClick={() => handleSelectMedicine(medicine)}>
                                 <span className='capitalize'>{medicine.name}</span>
                             </DropdownMenuItem>
