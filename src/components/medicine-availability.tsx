@@ -234,8 +234,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     if (!stock) return [];
     const uniqueMedicinesMap = new Map<string, Medicine>();
     stock.forEach(medicine => {
-      const key = `${medicine.name}-${medicine.manufacturer}-${medicine.price}`;
-      // Only add if it's not already in the map
+      const key = `${medicine.name.trim().toLowerCase()}-${medicine.manufacturer.trim().toLowerCase()}-${medicine.price}`;
       if (!uniqueMedicinesMap.has(key)) {
         uniqueMedicinesMap.set(key, medicine);
       }
@@ -497,7 +496,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                            {uniqueMedicines.map((medicine) => (
-                            <DropdownMenuItem key={`${medicine.name}-${medicine.manufacturer}-${medicine.price}`} onClick={() => handleSelectMedicine(medicine)}>
+                            <DropdownMenuItem key={`${medicine.name.trim()}-${medicine.manufacturer.trim()}-${medicine.price}`} onClick={() => handleSelectMedicine(medicine)}>
                                 <div>
                                     <span className='capitalize font-semibold'>{medicine.name}</span>
                                     <p className='text-xs text-muted-foreground'>{medicine.manufacturer}</p>
