@@ -21,10 +21,11 @@ import {
 import { MedicalTabState, Tab } from './app-shell';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
 import { Prescription } from '@/lib/prescription-service';
-import { Medication } from '@/lib/user-service';
+import { Medication, getPatientName } from '@/lib/user-service';
 import { Skeleton } from './ui/skeleton';
 import { User } from 'firebase/auth';
 import { createOrder, OrderItem } from '@/lib/order-service';
+import { sendPrescription } from '@/lib/prescribed-service';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
 export type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
@@ -114,25 +115,15 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
   };
   
   const handleSelectPharmacyForSending = async (pharmacy: Pharmacy) => {
-    if (!prescriptionToBill) return;
-
-    const items: OrderItem[] = prescriptionToBill.medications.map(med => {
-        const medInfo = getMedicineInfo(pharmacy, med.name);
-        const quantity = billQuantities[med.name] || calculateQuantity(med);
-        return {
-            medicine: {
-                name: med.name,
-                manufacturer: medInfo?.manufacturer || 'N/A',
-                price: medInfo?.price || 0,
-            },
-            quantity: quantity,
-        };
-    });
-
-    const total = calculateTotalBill(pharmacy, prescriptionToBill);
-
+    if (!prescriptionToSend) return;
     try {
-        await createOrder(user.uid, pharmacy, items, total, 'prescription');
+        const patientName = await getPatientName(user.uid) || user.displayName || 'Anonymous';
+        const prescriptionDetails = {
+            patientName: patientName,
+            doctorName: prescriptionToSend.doctorName,
+            medicines: prescriptionToSend.medications
+        };
+        await sendPrescription(pharmacy.id, prescriptionDetails);
         setSelectedPharmacy(pharmacy);
         setView('send-confirmation');
     } catch (error) {
@@ -220,13 +211,12 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
   const updateQuantity = (amount: number) => {
     if (!cartItem) return;
     const medicineToUpdate = cartItem.medicine;
-    const newQuantity = cartItem.quantity + amount;
-    
     const stockQuantity = selectedPharmacy?.stock?.find(m => 
         m.name === medicineToUpdate.name && 
         m.manufacturer === medicineToUpdate.manufacturer && 
         m.price === medicineToUpdate.price)?.quantity || 0;
 
+    const newQuantity = cartItem.quantity + amount;
     if (newQuantity > 0 && newQuantity <= stockQuantity) {
       setCartItem({ ...cartItem, quantity: newQuantity });
     }
