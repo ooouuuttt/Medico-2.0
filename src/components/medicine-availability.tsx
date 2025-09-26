@@ -115,13 +115,18 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
   };
   
   const handleSelectPharmacyForSending = async (pharmacy: Pharmacy) => {
-    if (!prescriptionToSend) return;
+    const prescriptionData = prescriptionToSend || prescriptionToBill;
+    if (!prescriptionData) {
+        toast({ variant: "destructive", title: "Send Failed", description: "No prescription data found."});
+        return;
+    }
+
     try {
         const patientName = await getPatientName(user.uid) || user.displayName || 'Anonymous';
         const prescriptionDetails = {
             patientName: patientName,
-            doctorName: prescriptionToSend.doctorName,
-            medicines: prescriptionToSend.medications
+            doctorName: prescriptionData.doctorName,
+            medicines: prescriptionData.medications
         };
         await sendPrescription(pharmacy.id, prescriptionDetails);
         setSelectedPharmacy(pharmacy);
@@ -727,3 +732,4 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
 };
 
 export default MedicineAvailability;
+
