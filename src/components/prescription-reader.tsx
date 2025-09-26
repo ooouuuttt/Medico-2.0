@@ -9,12 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { readPrescription, PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { pharmacies, Pharmacy } from '@/lib/dummy-data';
 import { Tab, MedicalTabState } from './app-shell';
 import { User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { saveScannedPrescription } from '@/lib/prescription-service';
 import { createNotification } from '@/lib/notification-service';
+import { Pharmacy, getPharmaciesWithStock } from '@/lib/pharmacy-service';
 
 interface PrescriptionReaderProps {
   user: User;
@@ -29,7 +29,16 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
     const { toast } = useToast();
+
+     useEffect(() => {
+        const fetchPharmacies = async () => {
+            const data = await getPharmaciesWithStock();
+            setPharmacies(data);
+        };
+        fetchPharmacies();
+    }, []);
 
     const onDrop = (acceptedFiles: File[]) => {
         if (acceptedFiles && acceptedFiles.length > 0) {
@@ -113,8 +122,8 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
         if (!medicineName) return [];
         const medicineNameLower = medicineName.toLowerCase().trim();
         return pharmacies.filter(pharmacy => 
-            Object.keys(pharmacy.medicines).some(med => 
-                med.toLowerCase().trim().includes(medicineNameLower) && pharmacy.medicines[med].status === 'In Stock'
+            pharmacy.stock?.some(med => 
+                med.name.toLowerCase().trim().includes(medicineNameLower) && med.quantity > 0
             )
         );
     };
@@ -200,8 +209,7 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
                                                         <div className='flex items-center gap-2'>
                                                             <MapPin className='w-3 h-3' />
                                                             <div>
-                                                                <span>{p.name}</span>
-                                                                <span className='text-muted-foreground/80 ml-1'>({p.distance})</span>
+                                                                <span>{p.pharmacyName}</span>
                                                             </div>
                                                         </div>
                                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOrderClick(p, med.name)}>

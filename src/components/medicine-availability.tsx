@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send, FileText } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send, FileText, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { pharmacies, Pharmacy } from '@/lib/dummy-data';
+import { getPharmaciesWithStock, Pharmacy, Medicine } from '@/lib/pharmacy-service';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from './ui/card';
@@ -20,9 +21,10 @@ import { MedicalTabState, Tab } from './app-shell';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
 import { Prescription } from '@/lib/prescription-service';
 import { Medication } from '@/lib/user-service';
+import { Skeleton } from './ui/skeleton';
 
 type View = 'list' | 'pharmacy' | 'payment' | 'confirmation' | 'send-prescription' | 'send-confirmation';
-type CartItem = { medicine: string; pharmacy: Pharmacy; quantity: number, price: number };
+type CartItem = { medicine: Medicine; pharmacy: Pharmacy; quantity: number };
 
 interface MedicineAvailabilityProps {
   initialState?: MedicalTabState;
@@ -33,9 +35,11 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const [searchTerm, setSearchTerm] = useState('');
   const [view, setView] = useState<View>('list');
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
-  const [selectedMedicine, setSelectedMedicine] = useState<{name: string, price: number, quantity: number} | null>(null);
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
   const [cartItem, setCartItem] = useState<CartItem | null>(null);
-  const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>(pharmacies);
+  const [allPharmacies, setAllPharmacies] = useState<Pharmacy[]>([]);
+  const [filteredPharmacies, setFilteredPharmacies] = useState<Pharmacy[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [billQuantities, setBillQuantities] = useState<{[key: string]: number}>({});
   const [maxBillQuantities, setMaxBillQuantities] = useState<{[key: string]: number}>({});
@@ -44,16 +48,28 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const prescriptionToBill = initialState?.prescriptionToBill;
   const prescriptionToSend = initialState?.prescriptionToSend;
 
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+        setIsLoading(true);
+        const data = await getPharmaciesWithStock();
+        setAllPharmacies(data);
+        setFilteredPharmacies(data);
+        setIsLoading(false);
+    };
+    fetchPharmacies();
+  }, []);
 
   useEffect(() => {
+    if (isLoading) return;
+
     if (medicinesToFind && medicinesToFind.length > 0) {
       setSearchTerm(medicinesToFind.join(', '));
       
-      const sortedPharmacies = [...pharmacies]
+      const sortedPharmacies = [...allPharmacies]
         .map(pharmacy => {
           const matchCount = medicinesToFind.reduce((count, medName) => {
-            const hasMed = Object.keys(pharmacy.medicines).some(
-              (m) => m.toLowerCase().includes(medName.toLowerCase()) && pharmacy.medicines[m].status === 'In Stock'
+            const hasMed = (pharmacy.stock || []).some(
+              (m) => m.name.toLowerCase().includes(medName.toLowerCase()) && m.quantity > 0
             );
             return count + (hasMed ? 1 : 0);
           }, 0);
@@ -66,26 +82,25 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     } else if (prescriptionToSend) {
         setView('send-prescription');
     } else if (initialState?.pharmacy && initialState?.medicineName) {
-      const pharmacy = pharmacies.find(p => p.id === initialState.pharmacy?.id);
+      const pharmacy = allPharmacies.find(p => p.id === initialState.pharmacy?.id);
       if (pharmacy) {
-        const medicineKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(initialState.medicineName!.toLowerCase()));
-        if (medicineKey) {
-            const medicineInfo = pharmacy.medicines[medicineKey];
+        const medicineInfo = (pharmacy.stock || []).find(m => m.name.toLowerCase().includes(initialState.medicineName!.toLowerCase()));
+        if (medicineInfo) {
             handleSelectPharmacy(pharmacy);
-            handleSelectMedicine(medicineKey, medicineInfo.price, medicineInfo.quantity);
+            handleSelectMedicine(medicineInfo);
         }
       }
     } else {
         const f = searchTerm
-        ? pharmacies.filter((pharmacy) =>
-            Object.keys(pharmacy.medicines).some(
-              (med) => med.toLowerCase().includes(searchTerm.toLowerCase())
+        ? allPharmacies.filter((pharmacy) =>
+            (pharmacy.stock || []).some(
+              (med) => med.name.toLowerCase().includes(searchTerm.toLowerCase())
             )
           )
-        : pharmacies;
+        : allPharmacies;
         setFilteredPharmacies(f);
     }
-  }, [initialState, searchTerm, prescriptionToSend, medicinesToFind]);
+  }, [initialState, searchTerm, allPharmacies, isLoading, prescriptionToSend, medicinesToFind]);
 
   const handleSelectPharmacy = (pharmacy: Pharmacy) => {
     setSelectedPharmacy(pharmacy);
@@ -99,18 +114,18 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     // Simulate sending prescription
     toast({
         title: "Prescription Sent",
-        description: `Your prescription has been sent to ${pharmacy.name}. They will contact you shortly.`,
+        description: `Your prescription has been sent to ${pharmacy.pharmacyName}. They will contact you shortly.`,
     });
     setView('send-confirmation');
   };
 
-  const handleSelectMedicine = (name: string, price: number, quantity: number) => {
-    setSelectedMedicine({name, price, quantity});
+  const handleSelectMedicine = (medicine: Medicine) => {
+    setSelectedMedicine(medicine);
   }
 
   const handleOrder = () => {
     if (!selectedPharmacy || !selectedMedicine) return;
-    setCartItem({ pharmacy: selectedPharmacy, medicine: selectedMedicine.name, quantity: 1, price: selectedMedicine.price });
+    setCartItem({ pharmacy: selectedPharmacy, medicine: selectedMedicine, quantity: 1 });
     setView('payment');
   }
 
@@ -141,8 +156,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   }
 
   const getMedicineInfo = (pharmacy: Pharmacy, medName: string) => {
-    const medKey = Object.keys(pharmacy.medicines).find(m => m.toLowerCase().includes(medName.toLowerCase()));
-    return medKey ? pharmacy.medicines[medKey] : null;
+    return (pharmacy.stock || []).find(m => m.name.toLowerCase().includes(medName.toLowerCase()));
   }
   
   const calculateQuantity = (med: Medication): number => {
@@ -177,7 +191,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   const calculateTotalBill = (pharmacy: Pharmacy, prescription: Prescription) => {
     return prescription.medications.reduce((total, med) => {
         const medInfo = getMedicineInfo(pharmacy, med.name);
-        if (medInfo && medInfo.status === 'In Stock') {
+        if (medInfo && medInfo.quantity > 0) {
             const price = medInfo.price;
             const quantity = billQuantities[med.name] || calculateQuantity(med);
             return total + price * quantity; 
@@ -208,6 +222,17 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     });
   }
 
+  if (isLoading) {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+        </div>
+    )
+  }
+
 
   if (view === 'send-confirmation') {
     return (
@@ -215,7 +240,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
             <Send className="h-16 w-16 text-green-500" />
             <h2 className="text-2xl font-bold font-headline">Prescription Sent!</h2>
             <p className="text-muted-foreground">
-                Your prescription from <strong>Dr. {prescriptionToSend?.doctorName}</strong> has been sent to <strong>{selectedPharmacy?.name}</strong>.
+                Your prescription from <strong>Dr. {prescriptionToSend?.doctorName}</strong> has been sent to <strong>{selectedPharmacy?.pharmacyName}</strong>.
             </p>
             <p className="text-sm text-muted-foreground">
                 The pharmacy will contact you shortly to confirm your order.
@@ -240,14 +265,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
             </Button>
             <h3 className="text-xl font-bold font-headline mb-4">Select a Pharmacy to Send To</h3>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {pharmacies.map((pharmacy) => (
+            {allPharmacies.map((pharmacy) => (
               <Card key={pharmacy.id} className="rounded-xl shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between">
                       <div>
-                          <h3 className="font-semibold">{pharmacy.name}</h3>
+                          <h3 className="font-semibold">{pharmacy.pharmacyName}</h3>
                           <div className="flex items-center text-sm text-muted-foreground">
                               <MapPin className="w-3.5 h-3.5 mr-1" />
-                              <span>{pharmacy.distance}</span>
+                              <span>{pharmacy.location}</span>
                           </div>
                       </div>
                   </CardContent>
@@ -265,7 +290,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                             </DialogTrigger>
                              <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Estimated Bill at {pharmacy.name}</DialogTitle>
+                                    <DialogTitle>Estimated Bill at {pharmacy.pharmacyName}</DialogTitle>
                                     <DialogDescription>
                                         This is an estimate for the prescribed medicines.
                                     </DialogDescription>
@@ -273,7 +298,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                 <div className="space-y-2 py-4">
                                     {prescriptionToSend.medications.map((med, i) => {
                                         const medInfo = getMedicineInfo(pharmacy, med.name);
-                                        if (!medInfo || medInfo.status !== 'In Stock') return null;
+                                        if (!medInfo || medInfo.quantity <= 0) return null;
                                         
                                         const price = medInfo.price;
                                         const quantity = billQuantities[med.name] || 0;
@@ -281,7 +306,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className="w-2/5 break-words">
-                                                    <span className='capitalize'>{med.name}</span>
+                                                    <p className='capitalize font-medium'>{med.name}</p>
+                                                    <p className='text-xs text-muted-foreground'>{medInfo.manufacturer}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Button 
@@ -315,7 +341,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         <span>Total</span>
                                         <span className='font-mono'>₹{prescriptionToSend.medications.reduce((acc, med) => {
                                             const medInfo = getMedicineInfo(pharmacy, med.name);
-                                            if (medInfo && medInfo.status === 'In Stock') {
+                                            if (medInfo && medInfo.quantity > 0) {
                                                 const quantity = billQuantities[med.name] || 0;
                                                 return acc + (medInfo.price * quantity);
                                             }
@@ -348,8 +374,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
         <CheckCircle2 className="h-16 w-16 text-green-500" />
         <h2 className="text-2xl font-bold font-headline">Order Placed!</h2>
         <p className="text-muted-foreground">
-          Your order for <strong>{cartItem?.quantity} x {cartItem?.medicine}</strong> from{' '}
-          <strong>{cartItem?.pharmacy?.name}</strong> has been placed.
+          Your order for <strong>{cartItem?.quantity} x {cartItem?.medicine.name}</strong> from{' '}
+          <strong>{cartItem?.pharmacy?.pharmacyName}</strong> has been placed.
         </p>
         <p className="text-sm text-muted-foreground">
           You will receive a notification when it's ready for collection.
@@ -379,14 +405,14 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-                <h3 className="font-bold text-lg">{cartItem.pharmacy.name}</h3>
-                <p className="text-muted-foreground text-sm">{cartItem.pharmacy.distance}</p>
+                <h3 className="font-bold text-lg">{cartItem.pharmacy.pharmacyName}</h3>
+                <p className="text-muted-foreground text-sm">{cartItem.pharmacy.location}</p>
             </div>
             <Separator />
             <div className="space-y-2">
                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Medicine</span>
-                    <span className="font-semibold capitalize">{cartItem.medicine}</span>
+                    <span className="font-semibold capitalize">{cartItem.medicine.name}</span>
                 </div>
                  <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Quantity</span>
@@ -398,7 +424,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Price</span>
-                    <span className="font-semibold">₹{cartItem.price * cartItem.quantity}</span>
+                    <span className="font-semibold">₹{cartItem.medicine.price * cartItem.quantity}</span>
                 </div>
             </div>
             <Separator />
@@ -411,7 +437,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
               </div>
             </div>
             <Button className="w-full" size="lg" onClick={handlePayment}>
-              Pay ₹{cartItem.price * cartItem.quantity} & Order
+              Pay ₹{cartItem.medicine.price * cartItem.quantity} & Order
             </Button>
           </CardContent>
         </Card>
@@ -420,7 +446,6 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   }
 
   if (view === 'pharmacy' && selectedPharmacy) {
-    const allMedicines = [...new Set(pharmacies.flatMap(p => Object.keys(p.medicines)))];
     return (
         <div className="animate-in fade-in duration-500">
              <Button variant="ghost" size="sm" onClick={() => { setView('list'); setSelectedPharmacy(null); }} className="mb-4">
@@ -429,10 +454,10 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
             </Button>
             <Card className="rounded-xl shadow-sm">
                 <CardHeader>
-                    <CardTitle>{selectedPharmacy.name}</CardTitle>
+                    <CardTitle>{selectedPharmacy.pharmacyName}</CardTitle>
                     <CardDescription className="flex items-center text-sm pt-1">
-                        <Building className="w-4 h-4 mr-2" />
-                        <span>{selectedPharmacy.address}, {selectedPharmacy.distance}</span>
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span>{selectedPharmacy.location}</span>
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -446,14 +471,11 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                          {allMedicines.map((medicineName) => {
-                              const medicineInfo = getMedicineInfo(selectedPharmacy, medicineName);
-                              return (
-                                <DropdownMenuItem key={medicineName} onClick={() => medicineInfo && handleSelectMedicine(medicineName, medicineInfo.price, medicineInfo.quantity)}>
-                                    <span className='capitalize'>{medicineName}</span>
-                                </DropdownMenuItem>
-                            )
-                          })}
+                          {(selectedPharmacy.stock || []).map((medicine) => (
+                            <DropdownMenuItem key={medicine.name} onClick={() => handleSelectMedicine(medicine)}>
+                                <span className='capitalize'>{medicine.name}</span>
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
 
@@ -507,25 +529,36 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
             const medInfo = searchTerm && !medicinesToFind ? getMedicineInfo(pharmacy, searchTerm) : null;
             return (
               <Card key={pharmacy.id} className="rounded-xl shadow-sm">
-                  <CardContent className="p-4 flex items-start justify-between" onClick={() => handleSelectPharmacy(pharmacy)}>
-                      <div className="cursor-pointer flex-grow">
-                          <h3 className="font-semibold">{pharmacy.name}</h3>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                              <MapPin className="w-3.5 h-3.5 mr-1" />
-                              <span>{pharmacy.distance}</span>
-                          </div>
-                          <div className="flex items-center text-xs text-muted-foreground mt-1">
-                              <Building className="w-3 h-3 mr-1.5" />
-                              <span>{pharmacy.address}</span>
-                          </div>
+                  <CardContent className="p-4" onClick={() => handleSelectPharmacy(pharmacy)}>
+                      <div className="flex items-start justify-between">
+                        <div className="cursor-pointer flex-grow">
+                            <h3 className="font-semibold">{pharmacy.pharmacyName}</h3>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="w-3.5 h-3.5 mr-1" />
+                                <span>{pharmacy.location}</span>
+                            </div>
+                        </div>
+                        <Badge variant={pharmacy.isOpen ? 'default' : 'secondary'} className={cn('capitalize', pharmacy.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                            {pharmacy.isOpen ? 'Open' : 'Closed'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground mt-1">
+                            <Clock className="w-3 h-3 mr-1.5" />
+                            <span>{pharmacy.timings}</span>
                       </div>
                       {medInfo && (
-                         <div className='text-right'>
-                            <Badge variant={medInfo.status === 'In Stock' ? 'default' : 'destructive'} className={cn('capitalize', medInfo.status === 'In Stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                {medInfo.status === 'In Stock' ? <CheckCircle className='w-3 h-3 mr-1.5'/> : <XCircle className='w-3 h-3 mr-1.5'/>}
-                                {medInfo.status}
-                            </Badge>
-                            <p className='text-sm font-semibold mt-1'>₹{medInfo.price}</p>
+                         <div className='text-right mt-2 border-t pt-2'>
+                            <div className='flex justify-between items-center'>
+                                <p className='capitalize font-semibold'>{medInfo.name}</p>
+                                <p className='text-sm font-semibold'>₹{medInfo.price}</p>
+                            </div>
+                            <div className='flex justify-between items-center text-xs'>
+                                <p className='text-muted-foreground'>{medInfo.manufacturer}</p>
+                                <Badge variant={medInfo.quantity > 0 ? 'default' : 'destructive'} className={cn('capitalize', medInfo.quantity > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                                    {medInfo.quantity > 0 ? <CheckCircle className='w-3 h-3 mr-1.5'/> : <XCircle className='w-3 h-3 mr-1.5'/>}
+                                    {medInfo.quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                                </Badge>
+                            </div>
                          </div>
                       )}
                   </CardContent>
@@ -543,7 +576,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                             </DialogTrigger>
                              <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Estimated Bill at {pharmacy.name}</DialogTitle>
+                                    <DialogTitle>Estimated Bill at {pharmacy.pharmacyName}</DialogTitle>
                                     <DialogDescription>
                                         This is an estimate for the prescribed medicines.
                                     </DialogDescription>
@@ -551,7 +584,7 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                 <div className="space-y-2 py-4">
                                     {prescriptionToBill.medications.map((med, i) => {
                                         const medInfo = getMedicineInfo(pharmacy, med.name);
-                                        if (!medInfo || medInfo.status !== 'In Stock') return null;
+                                        if (!medInfo || medInfo.quantity <= 0) return null;
                                         
                                         const price = medInfo.price;
                                         const quantity = billQuantities[med.name] || 0;
@@ -559,7 +592,8 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm">
                                                 <div className="w-2/5 break-words">
-                                                    <span className='capitalize'>{med.name}</span>
+                                                    <p className='capitalize font-medium'>{med.name}</p>
+                                                    <p className='text-xs text-muted-foreground'>{medInfo.manufacturer}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Button 

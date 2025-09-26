@@ -15,7 +15,6 @@ import { Logo } from '@/components/icons';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Medical from './medical';
 import PrescriptionReader from './prescription-reader';
-import { Pharmacy } from '@/lib/dummy-data';
 import { User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +35,7 @@ import ChatConsultation from './chat-consultation';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { createNotification } from '@/lib/notification-service';
 import { Prescription } from '@/lib/prescription-service';
+import { Pharmacy } from '@/lib/pharmacy-service';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat';
 

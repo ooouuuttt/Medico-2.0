@@ -26,14 +26,6 @@ export type Document = {
   date: string;
 }
 
-export type Pharmacy = {
-  id:string;
-  name: string;
-  distance: string;
-  address: string;
-  medicines: { [key: string]: { status: 'In Stock' | 'Out of Stock', quantity: number, price: number } };
-};
-
 export type Doctor = {
     id: string;
     name: string;
@@ -68,52 +60,6 @@ export const prescriptions: Prescription[] = [
 export const documents: Document[] = [
     { id: 'doc1', name: 'Blood Test Report', type: 'PDF', date: '2024-07-10'},
     { id: 'doc2', name: 'X-Ray Scan', type: 'JPG', date: '2024-05-22'},
-];
-
-export const pharmacies: Pharmacy[] = [
-  {
-    id: 'ph1',
-    name: 'Apollo Pharmacy',
-    distance: '1.2 km away',
-    address: 'Main Road, Rampur',
-    medicines: { 
-      'Paracetamol': { status: 'In Stock', quantity: 50, price: 30 },
-      'Amoxicillin': { status: 'Out of Stock', quantity: 0, price: 80 },
-      'Ibuprofen': { status: 'In Stock', quantity: 30, price: 45 }
-    },
-  },
-  {
-    id: 'ph2',
-    name: 'Jan Aushadhi Kendra',
-    distance: '2.5 km away',
-    address: 'Bus Stand Road, Govindpur',
-    medicines: { 
-      'Paracetamol': { status: 'In Stock', quantity: 100, price: 25 },
-      'Amoxicillin': { status: 'In Stock', quantity: 20, price: 70 },
-      'Folic Acid': { status: 'Out of Stock', quantity: 0, price: 50 }
-    },
-  },
-  {
-    id: 'ph3',
-    name: 'Wellness Forever',
-    distance: '3.1 km away',
-    address: 'Market Square, Sitapur',
-    medicines: { 
-      'Ibuprofen': { status: 'In Stock', quantity: 45, price: 40 },
-      'Cough Syrup': { status: 'In Stock', quantity: 25, price: 120 }
-    },
-  },
-   {
-    id: 'ph4',
-    name: 'City Medicals',
-    distance: '4.0 km away',
-    address: 'Hospital Road, Alipur',
-    medicines: { 
-      'Paracetamol': { status: 'Out of Stock', quantity: 0, price: 32 },
-      'Amoxicillin': { status: 'In Stock', quantity: 15, price: 75 },
-      'Folic Acid': { status: 'In Stock', quantity: 60, price: 45 }
-    },
-  },
 ];
 
 export const specialties = [
