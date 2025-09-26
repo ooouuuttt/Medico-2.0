@@ -11,6 +11,7 @@ import type { Tab } from './app-shell';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 interface OrderHistoryProps {
   user: User;
