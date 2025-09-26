@@ -131,9 +131,25 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
     setSelectedMedicine(inStockVersion);
   }
 
-  const handleOrder = () => {
-    if (!selectedPharmacy || !selectedMedicine) return;
-    setCartItem({ pharmacy: selectedPharmacy, medicine: selectedMedicine, quantity: 1 });
+  const handleOrder = (medicine: Medicine) => {
+    if (!selectedPharmacy) return;
+    const inStockVersion = selectedPharmacy?.stock?.find(m => 
+        m.name === medicine.name && 
+        m.manufacturer === medicine.manufacturer && 
+        m.price === medicine.price &&
+        m.quantity > 0
+    ) || medicine;
+
+    if (inStockVersion.quantity === 0) {
+        toast({
+            variant: "destructive",
+            title: "Out of Stock",
+            description: "This medicine is currently out of stock.",
+        });
+        return;
+    }
+    
+    setCartItem({ pharmacy: selectedPharmacy, medicine: inStockVersion, quantity: 1 });
     setView('payment');
   }
 
@@ -156,9 +172,16 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
   }
 
   const updateQuantity = (amount: number) => {
-    if (!cartItem || !selectedMedicine) return;
+    if (!cartItem) return;
+    const medicineToUpdate = cartItem.medicine;
     const newQuantity = cartItem.quantity + amount;
-    if (newQuantity > 0 && newQuantity <= selectedMedicine.quantity) {
+    
+    const stockQuantity = selectedPharmacy?.stock?.find(m => 
+        m.name === medicineToUpdate.name && 
+        m.manufacturer === medicineToUpdate.manufacturer && 
+        m.price === medicineToUpdate.price)?.quantity || 0;
+
+    if (newQuantity > 0 && newQuantity <= stockQuantity) {
       setCartItem({ ...cartItem, quantity: newQuantity });
     }
   }
@@ -482,50 +505,38 @@ const MedicineAvailability = ({ initialState, setActiveTab }: MedicineAvailabili
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <h4 className='font-semibold'>Check Medicine Availability</h4>
-                    <div className="space-y-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="w-full justify-between">
-                            <div className='flex flex-col items-start'>
-                                <span className='capitalize font-semibold'>{selectedMedicine ? selectedMedicine.name : "Select a medicine"}</span>
-                                {selectedMedicine && <span className='text-xs text-muted-foreground'>{selectedMedicine.manufacturer}</span>}
-                            </div>
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                           {uniqueMedicines.map((medicine) => (
-                            <DropdownMenuItem key={`${medicine.name.trim()}-${medicine.manufacturer.trim()}-${medicine.price}`} onClick={() => handleSelectMedicine(medicine)}>
-                                <div>
-                                    <span className='capitalize font-semibold'>{medicine.name}</span>
-                                    <p className='text-xs text-muted-foreground'>{medicine.manufacturer}</p>
-                                </div>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <h4 className='font-semibold'>Available Medicines</h4>
+                    <div className="space-y-3 max-h-[45vh] overflow-y-auto">
+                      {uniqueMedicines.map((medicine) => {
+                          const stockInfo = selectedPharmacy.stock?.find(m => 
+                            m.name.trim().toLowerCase() === medicine.name.trim().toLowerCase() && 
+                            m.manufacturer.trim().toLowerCase() === medicine.manufacturer.trim().toLowerCase() && 
+                            m.price === medicine.price && 
+                            m.quantity > 0
+                          );
+                          const isInStock = stockInfo && stockInfo.quantity > 0;
 
-                      {selectedMedicine && (
-                        <div className="border-t pt-4 space-y-4 animate-in fade-in duration-300">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="font-medium capitalize">{selectedMedicine.name}</p>
-                                    <div className='flex items-center gap-2 text-sm'>
-                                        <p className="text-muted-foreground">Price: ₹{selectedMedicine.price}</p>
-                                        <Separator orientation='vertical' className='h-4'/>
-                                         <Badge variant={selectedMedicine.quantity > 0 ? "default" : "destructive"} className={cn(selectedMedicine.quantity > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800", "font-semibold")}>
-                                          {selectedMedicine.quantity > 0 ? "In Stock" : "Out of Stock"}
-                                        </Badge>
+                          return (
+                            <div key={`${medicine.name}-${medicine.manufacturer}-${medicine.price}`} className="border rounded-lg p-3 flex flex-col gap-2">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-bold capitalize">{medicine.name}</p>
+                                        <p className="text-xs text-muted-foreground">{medicine.manufacturer}</p>
                                     </div>
+                                    <Badge variant={isInStock ? "default" : "destructive"} className={cn(isInStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800", "font-semibold")}>
+                                      {isInStock ? "In Stock" : "Out of Stock"}
+                                    </Badge>
                                 </div>
-                                <Button size="sm" onClick={handleOrder} disabled={selectedMedicine.quantity === 0}>
-                                    <ShoppingCart className="h-4 w-4 mr-2" />
-                                    Order
-                                </Button>
+                                <div className="flex justify-between items-center border-t pt-2 mt-2">
+                                    <p className="font-semibold text-lg">₹{medicine.price.toFixed(2)}</p>
+                                    <Button size="sm" onClick={() => handleOrder(medicine)} disabled={!isInStock}>
+                                        <ShoppingCart className="h-4 w-4 mr-2" />
+                                        Order
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                      )}
+                          )
+                        })}
                     </div>
                 </CardContent>
             </Card>
