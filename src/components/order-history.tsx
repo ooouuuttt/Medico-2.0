@@ -85,16 +85,21 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     const config = statusConfig[status];
     const Icon = config.icon;
     return (
-        <div className="relative flex items-center gap-4">
-            {!isFirst && <div className={cn("absolute left-[13px] top-0 h-4 w-0.5", isActive ? 'bg-primary' : 'bg-border')} />}
-             <div className={cn("relative z-10 flex h-7 w-7 items-center justify-center rounded-full", isActive ? 'bg-primary' : 'bg-border')}>
-                <Icon className={cn("h-4 w-4", isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
-            </div>
-            <span className={cn("font-semibold", isActive ? 'text-foreground' : 'text-muted-foreground')}>
-                {config.label}
-            </span>
-             {!isLast && <div className={cn("absolute left-[13px] bottom-0 h-4 w-0.5", isActive && status !== 'completed' ? 'bg-primary' : 'bg-border')} />}
-        </div>
+      <div className="relative flex flex-col items-center justify-start flex-1">
+          <div className={cn(
+            "absolute top-[14px] w-full h-0.5",
+            !isFirst && "left-[-50%]",
+            isFirst && "left-0",
+            isActive ? 'bg-primary' : 'bg-border'
+          )} />
+          
+          <div className={cn("relative z-10 flex h-7 w-7 items-center justify-center rounded-full", isActive ? 'bg-primary' : 'bg-border')}>
+              <Icon className={cn("h-4 w-4", isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
+          </div>
+          <span className={cn("text-xs text-center mt-2", isActive ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+              {config.label}
+          </span>
+      </div>
     )
   }
 
@@ -140,8 +145,8 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                 </div>
                 
                 <div className='pt-4 border-t'>
-                    <h4 className='font-semibold mb-3'>Order Status</h4>
-                    <div className="flex justify-between">
+                    <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
+                    <div className="flex justify-between items-start w-full">
                        {statuses.map((status, index) => (
                            <TimelineStep key={status} status={status} isActive={index <= currentStatusIndex} isFirst={index === 0} isLast={index === statuses.length - 1}/>
                        ))}
