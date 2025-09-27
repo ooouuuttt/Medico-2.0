@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare, ShoppingBag, Mic, MicOff, Activity } from 'lucide-react';
 import { cn, formatDoctorName } from '@/lib/utils';
@@ -337,7 +337,7 @@ export default function AppShell({ user }: AppShellProps) {
               </Button>
             ))}
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%+10px)]">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%+15px)]">
               {isSupported && (
                 <Button
                   variant="default"
@@ -376,3 +376,5 @@ export default function AppShell({ user }: AppShellProps) {
     </div>
   );
 }
+
+    
