@@ -238,3 +238,4 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
 export default PrescriptionReader;
 
 
+
