@@ -75,6 +75,5 @@ export function useVoiceRecognition({ onTranscriptReady }: VoiceRecognitionOptio
     transcript,
     startListening,
     stopListening,
-    isSupported: !!recognitionRef.current,
   };
 }

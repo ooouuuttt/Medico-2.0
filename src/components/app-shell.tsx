@@ -75,6 +75,16 @@ export default function AppShell({ user }: AppShellProps) {
   const { toast } = useToast();
   const { language, t, setLanguage } = useTranslation();
   const [isProcessingCommand, setIsProcessingCommand] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Client-side check for voice recognition support
+    if (typeof window !== 'undefined') {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        setVoiceSupported(!!SpeechRecognition);
+    }
+  }, []);
+
 
   const handleCommand = async (command: string) => {
     if (!command) return;
@@ -106,7 +116,7 @@ export default function AppShell({ user }: AppShellProps) {
     }
   };
 
-  const { isListening, transcript, startListening, stopListening, isSupported } = useVoiceRecognition({
+  const { isListening, transcript, startListening, stopListening } = useVoiceRecognition({
       onTranscriptReady: handleCommand
   });
 
@@ -338,7 +348,7 @@ export default function AppShell({ user }: AppShellProps) {
             ))}
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%+15px)]">
-              {isSupported && (
+              {voiceSupported && (
                 <Button
                   variant="default"
                   size="icon"
@@ -376,5 +386,3 @@ export default function AppShell({ user }: AppShellProps) {
     </div>
   );
 }
-
-    
