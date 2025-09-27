@@ -176,6 +176,11 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
 
   const handlePayment = async () => {
     if (!cartItem) return;
+
+    // Open Razorpay payment link
+    const paymentUrl = 'https://razorpay.me/@amitlaxmanmohan';
+    window.open(paymentUrl, '_blank');
+    
     try {
       const items: OrderItem[] = [{
         medicine: {
@@ -506,20 +511,15 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Total Price</span>
-                    <span className="font-semibold">₹{cartItem.medicine.price * cartItem.quantity}</span>
+                    <span className="font-semibold">₹{(cartItem.medicine.price * cartItem.quantity).toFixed(2)}</span>
                 </div>
             </div>
             <Separator />
-            <div>
-              <h4 className="font-semibold mb-2">Select Payment Method</h4>
-              <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline">UPI</Button>
-                  <Button variant="outline">Card</Button>
-                  <Button variant="outline">Cash on Delivery</Button>
-              </div>
+            <div className='text-center'>
+              <p className='text-sm text-muted-foreground'>You will be redirected to Razorpay to complete your payment.</p>
             </div>
             <Button className="w-full" size="lg" onClick={handlePayment}>
-              Pay ₹{cartItem.medicine.price * cartItem.quantity} & Order
+              Pay ₹{(cartItem.medicine.price * cartItem.quantity).toFixed(2)} & Order
             </Button>
           </CardContent>
         </Card>

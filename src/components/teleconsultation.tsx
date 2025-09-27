@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -185,6 +186,10 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
         });
         return;
     }
+    
+    // Open Razorpay payment link
+    const paymentUrl = 'https://razorpay.me/@amitlaxmanmohan';
+    window.open(paymentUrl, '_blank');
 
     try {
         const patientName = await getPatientName(user.uid);
@@ -370,14 +375,8 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
                 </div>
             </div>
             <Separator />
-            <div>
-              <h4 className="font-semibold mb-2">Select Payment Method</h4>
-              <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline">UPI</Button>
-                  <Button variant="outline">Card</Button>
-                  <Button variant="outline">Netbanking</Button>
-                  <Button variant="outline">Wallet</Button>
-              </div>
+            <div className='text-center'>
+              <p className='text-sm text-muted-foreground'>You will be redirected to Razorpay to complete your payment.</p>
             </div>
             <Button className="w-full" size="lg" onClick={handlePayment}>
               Pay ₹{consultationType ? consultationPrices[consultationType as keyof typeof consultationPrices] : 0}
