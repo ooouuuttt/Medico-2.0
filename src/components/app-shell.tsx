@@ -237,7 +237,6 @@ export default function AppShell({ user }: AppShellProps) {
     { id: 'consult', icon: Stethoscope, label: t('consult') },
     { id: 'chats', icon: MessageSquare, label: 'Chats' },
     { id: 'prescriptions', icon: FileText, label: t('prescriptions')},
-    { id: 'records', icon: ClipboardList, label: t('records') },
   ];
 
   return (
@@ -251,19 +250,7 @@ export default function AppShell({ user }: AppShellProps) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            {isSupported && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={isListening ? stopListening : startListening}
-                className={cn(
-                  'h-8 w-8 rounded-full',
-                  isListening && 'bg-destructive/20 text-destructive'
-                )}
-              >
-                {isProcessingCommand ? <Activity className="animate-spin" /> : (isListening ? <MicOff /> : <Mic />)}
-              </Button>
-            )}
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm bg-primary/10 hover:bg-primary/20">
@@ -308,6 +295,10 @@ export default function AppShell({ user }: AppShellProps) {
                   <CalendarCheck className="mr-2 h-4 w-4" />
                   <span>{t('appointments')}</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTab('records')}>
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  <span>{t('records')}</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActiveTab('order-history')}>
                   <ShoppingBag className="mr-2 h-4 w-4" />
                   <span>Order History</span>
@@ -327,8 +318,42 @@ export default function AppShell({ user }: AppShellProps) {
         </main>
 
         <footer className="sticky bottom-0 bg-card border-t border-border mt-auto">
-          <nav className="flex justify-around items-center p-1">
-            {navItems.map((item) => (
+          <nav className="relative flex justify-around items-center p-1 h-[60px]">
+            {navItems.slice(0, 2).map((item) => (
+              <Button
+                key={item.id}
+                variant="ghost"
+                className={cn(
+                  'flex flex-col h-auto items-center justify-center gap-1 p-2 w-full rounded-lg transition-colors duration-200',
+                  activeTab === item.id
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground'
+                )}
+                onClick={() => setActiveTab(item.id as Tab)}
+                aria-label={item.label}
+              >
+                <item.icon className="w-6 h-6" />
+                <span className="text-xs font-medium">{item.label}</span>
+              </Button>
+            ))}
+
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[calc(50%+10px)]">
+              {isSupported && (
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={isListening ? stopListening : startListening}
+                  className={cn(
+                    'h-16 w-16 rounded-full shadow-lg bg-primary hover:bg-primary/90',
+                    isListening && 'bg-destructive/80 text-destructive-foreground animate-pulse'
+                  )}
+                >
+                  {isProcessingCommand ? <Activity className="h-7 w-7 animate-spin" /> : <Mic className="h-7 w-7"/>}
+                </Button>
+              )}
+            </div>
+
+            {navItems.slice(2).map((item) => (
               <Button
                 key={item.id}
                 variant="ghost"
