@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare, ShoppingBag } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDoctorName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
 import SymptomChecker from '@/components/symptom-checker';
@@ -96,7 +96,7 @@ export default function AppShell({ user }: AppShellProps) {
                 if (!notificationSent) {
                     createNotification(user.uid, {
                         title: 'Appointment Reminder',
-                        description: `Your appointment with Dr. ${appointment.doctorName} is in less than 5 minutes.`,
+                        description: `Your appointment with ${formatDoctorName(appointment.doctorName)} is in less than 5 minutes.`,
                         type: 'appointment'
                     });
                     // Mark that notification has been sent for this session
@@ -125,7 +125,7 @@ export default function AppShell({ user }: AppShellProps) {
                  if (!notificationSent) {
                     createNotification(user.uid, {
                         title: 'Appointment Reminder',
-                        description: `Your appointment with Dr. ${appointment.doctorName} is starting soon.`,
+                        description: `Your appointment with ${formatDoctorName(appointment.doctorName)} is starting soon.`,
                         type: 'appointment'
                     });
                     sessionStorage.setItem(`notif_${doc.id}`, 'true');

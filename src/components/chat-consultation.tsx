@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { User } from 'firebase/auth';
 import { getMessages, sendMessage, Message, updateDoc, doc } from '@/lib/chat-service';
 import { Skeleton } from './ui/skeleton';
+import { formatDoctorName } from '@/lib/utils';
 
 interface ChatConsultationProps {
   chatId: string;
@@ -57,12 +58,12 @@ const ChatConsultation = ({ chatId, doctorName, doctorAvatar, user, onEnd }: Cha
                 <ArrowLeft />
             </Button>
             <Avatar>
-                <AvatarImage src={doctorAvatar} alt={`Dr. ${doctorName}`} className="object-cover" />
+                <AvatarImage src={doctorAvatar} alt={formatDoctorName(doctorName)} className="object-cover" />
                 <AvatarFallback>{doctorName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
                 <h2 className="font-semibold text-lg">
-                    Dr. {doctorName}
+                    {formatDoctorName(doctorName)}
                 </h2>
                 <p className="text-sm text-green-500">Online</p>
             </div>

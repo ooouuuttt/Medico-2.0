@@ -7,6 +7,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from './ui/button';
 import { PhoneOff, Mic, MicOff } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
+import { formatDoctorName } from '@/lib/utils';
 
 interface AudioConsultationProps {
   doctor: Doctor;
@@ -40,7 +41,7 @@ const AudioConsultation = ({ doctor, onEnd }: AudioConsultationProps) => {
       <div className='text-center space-y-2'>
         <p className="text-muted-foreground">Audio Call with</p>
         <h2 className="text-2xl font-bold">
-            Dr. {doctor.name}
+            {formatDoctorName(doctor.name)}
         </h2>
       </div>
 

@@ -10,6 +10,7 @@ import { Skeleton } from './ui/skeleton';
 import { MessageSquare } from 'lucide-react';
 import type { Tab } from './app-shell';
 import { formatDistanceToNow } from 'date-fns';
+import { formatDoctorName } from '@/lib/utils';
 
 interface ChatListProps {
   user: User;
@@ -78,7 +79,7 @@ const ChatList = ({ user, setActiveTab }: ChatListProps) => {
             </Avatar>
             <div className="flex-grow">
               <div className="flex justify-between items-start">
-                <h3 className="font-semibold">Dr. {chat.doctorName}</h3>
+                <h3 className="font-semibold">{formatDoctorName(chat.doctorName)}</h3>
                 <p className="text-xs text-muted-foreground">
                     {chat.lastMessageTimestamp && formatDistanceToNow(chat.lastMessageTimestamp.toDate(), { addSuffix: true })}
                 </p>

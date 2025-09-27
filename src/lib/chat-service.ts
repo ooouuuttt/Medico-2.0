@@ -18,6 +18,7 @@ import {
 import { db } from './firebase';
 import { createNotification } from './notification-service';
 import { getPatientName } from './user-service';
+import { formatDoctorName } from './utils';
 
 export interface Chat extends DocumentData {
   id: string;
@@ -160,7 +161,7 @@ export const sendMessage = async (
       // If the sender is a doctor, notify the patient
       if (senderId === chatData.doctorId) {
           await createNotification(chatData.patientId, {
-              title: `New message from Dr. ${chatData.doctorName}`,
+              title: `New message from ${formatDoctorName(chatData.doctorName)}`,
               description: text,
               type: 'appointment' // Re-using appointment icon
           })
@@ -187,7 +188,7 @@ export const createOrGetChat = async (
             doctorId,
             patientName,
             doctorName,
-            lastMessageText: `Chat with Dr. ${doctorName} started.`,
+            lastMessageText: `Chat with ${formatDoctorName(doctorName)} started.`,
             lastMessageTimestamp: serverTimestamp(),
             doctorAvatar: doctorAvatar || '',
         });

@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { Tab } from './app-shell';
 import { createNotification } from '@/lib/notification-service';
+import { formatDoctorName } from '@/lib/utils';
 
 
 interface Appointment extends DocumentData {
@@ -87,7 +88,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                 ) {
                     createNotification(user.uid, {
                         title: 'Appointment Cancelled',
-                        description: `Dr. ${appointment.doctorName} cancelled your appointment. Reason: ${appointment.cancellationReason}`,
+                        description: `${formatDoctorName(appointment.doctorName)} cancelled your appointment. Reason: ${appointment.cancellationReason}`,
                         type: 'alert'
                     });
                     notifiedCancellations.current.add(appointment.id);
@@ -114,7 +115,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
             if (apt) {
                 createNotification(user.uid, {
                     title: 'Appointment Cancelled',
-                    description: `You have cancelled your appointment with Dr. ${apt.doctorName}.`,
+                    description: `You have cancelled your appointment with ${formatDoctorName(apt.doctorName)}.`,
                     type: 'appointment'
                 });
             }
@@ -186,7 +187,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                                     <AppointmentIcon type={apt.type} />
                                 </div>
                                 <div>
-                                    <p className="font-bold">{apt.doctorName}</p>
+                                    <p className="font-bold">{formatDoctorName(apt.doctorName)}</p>
                                     <p className="text-sm text-muted-foreground">{apt.specialty}</p>
                                     <p className="text-sm text-muted-foreground">
                                         {formatDate(apt.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -223,7 +224,7 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                                     <AppointmentIcon type={apt.type} />
                                 </div>
                                 <div>
-                                    <p className="font-bold">{apt.doctorName}</p>
+                                    <p className="font-bold">{formatDoctorName(apt.doctorName)}</p>
                                     <p className="text-sm text-muted-foreground">{apt.specialty}</p>
                                     <p className="text-sm text-muted-foreground">
                                         {formatDate(apt.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}

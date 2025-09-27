@@ -16,6 +16,7 @@ import { Separator } from './ui/separator';
 import { Medication } from '@/lib/user-service';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { formatDoctorName } from '@/lib/utils';
 
 interface PrescriptionsProps {
   user: User;
@@ -59,7 +60,7 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
     doc.text('Medico Prescription', 10, 20);
 
     doc.setFontSize(14);
-    doc.text(`Doctor: Dr. ${prescription.doctorName}`, 10, 40);
+    doc.text(`Doctor: ${formatDoctorName(prescription.doctorName)}`, 10, 40);
     doc.text(`Patient: ${prescription.patientName}`, 10, 50);
     const formattedDate = new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
       year: 'numeric',
@@ -219,7 +220,7 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">Dr. {prescription.doctorName}</CardTitle>
+                  <CardTitle className="text-lg">{formatDoctorName(prescription.doctorName)}</CardTitle>
                   <CardDescription className="pt-1">
                     {new Date(prescription.createdAt.toDate()).toLocaleDateString('en-IN', {
                       year: 'numeric',
@@ -271,7 +272,7 @@ const Prescriptions = ({ user, setActiveTab }: PrescriptionsProps) => {
                 <DialogHeader>
                     <DialogTitle>Order Prescription</DialogTitle>
                     <DialogDescription>
-                        Select medicines to order from Dr. {selectedPrescription?.doctorName}'s prescription.
+                        Select medicines to order from {selectedPrescription ? formatDoctorName(selectedPrescription.doctorName) : ''}'s prescription.
                     </DialogDescription>
                 </DialogHeader>
                 <div className='py-4 space-y-3'>

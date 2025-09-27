@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { saveScannedPrescription } from '@/lib/prescription-service';
 import { createNotification } from '@/lib/notification-service';
 import { Pharmacy, getPharmaciesWithStock } from '@/lib/pharmacy-service';
+import { formatDoctorName } from '@/lib/utils';
 
 interface PrescriptionReaderProps {
   user: User;
@@ -88,7 +89,7 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
         
         await createNotification(user.uid, {
             title: 'Prescription Saved',
-            description: `Scanned prescription from Dr. ${result.doctorName} has been saved.`,
+            description: `Scanned prescription from ${formatDoctorName(result.doctorName)} has been saved.`,
             type: 'medicine'
         });
 
@@ -185,7 +186,7 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex justify-between text-sm">
-                            <div><span className="font-semibold">Doctor:</span> {result.doctorName}</div>
+                            <div><span className="font-semibold">Doctor:</span> {formatDoctorName(result.doctorName)}</div>
                             <div><span className="font-semibold">Date:</span> {result.date}</div>
                         </div>
                         <Separator />
@@ -236,6 +237,7 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
 };
 
 export default PrescriptionReader;
+
 
 
 

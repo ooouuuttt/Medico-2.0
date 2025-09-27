@@ -9,6 +9,7 @@ import { PhoneOff, Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { formatDoctorName } from '@/lib/utils';
 
 interface VideoConsultationProps {
   doctor: Doctor;
@@ -78,7 +79,7 @@ const VideoConsultation = ({ doctor, onEnd }: VideoConsultationProps) => {
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500 p-4 space-y-4">
       <h2 className="text-xl font-bold text-center">
-        Video Call with Dr. {doctor.name}
+        Video Call with {formatDoctorName(doctor.name)}
       </h2>
       <Card className="flex-grow relative overflow-hidden rounded-xl">
         {doctorAvatar && (

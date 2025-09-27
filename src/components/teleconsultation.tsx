@@ -13,7 +13,7 @@ import VideoConsultation from './video-consultation';
 import AudioConsultation from './audio-consultation';
 import { Calendar } from './ui/calendar';
 import { add, format, isSameDay, startOfToday } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDoctorName } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, DocumentData, addDoc, Timestamp, where } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -153,13 +153,13 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
 
         await createNotification(user.uid, {
             title: 'Chat Started',
-            description: `You have started a chat with Dr. ${doctor.name}.`,
+            description: `You have started a chat with ${formatDoctorName(doctor.name)}.`,
             type: 'appointment'
         });
 
         toast({
             title: 'Chat Started!',
-            description: `You can now chat with Dr. ${doctor.name}.`,
+            description: `You can now chat with ${formatDoctorName(doctor.name)}.`,
         });
         setActiveTab('chat', { chatId, doctorName: doctor.name, doctorAvatar: doctor.avatar });
     } catch(error) {
@@ -219,7 +219,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
 
         await createNotification(user.uid, {
             title: 'Appointment Booked',
-            description: `Your ${consultationType} appointment with Dr. ${selectedDoctor.name} is confirmed.`,
+            description: `Your ${consultationType} appointment with ${formatDoctorName(selectedDoctor.name)} is confirmed.`,
             type: 'appointment'
         });
 
@@ -316,7 +316,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
         <h2 className="text-2xl font-bold font-headline">Appointment Scheduled!</h2>
         <p className="text-muted-foreground">
           Your {consultationType} appointment with{' '}
-          <strong>{selectedDoctor?.name}</strong> for{' '}
+          <strong>{selectedDoctor?.name && formatDoctorName(selectedDoctor.name)}</strong> for{' '}
           <strong>{selectedDate && format(selectedDate, 'dd MMM yyyy')} at {selectedTime}</strong> has been successfully booked.
         </p>
         <p className="text-sm text-muted-foreground">
@@ -355,7 +355,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
                 />
               )}
               <div>
-                <h3 className="font-bold text-lg">{selectedDoctor?.name}</h3>
+                <h3 className="font-bold text-lg">{selectedDoctor?.name && formatDoctorName(selectedDoctor.name)}</h3>
                 <p className="text-muted-foreground">{selectedDoctor?.specialization}</p>
               </div>
             </div>
@@ -481,7 +481,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
                         className="rounded-lg object-cover"
                       />
                     <div className="flex-grow">
-                      <CardTitle className="text-xl">{doctor.name}</CardTitle>
+                      <CardTitle className="text-xl">{formatDoctorName(doctor.name)}</CardTitle>
                       <CardDescription>{doctor.specialization}</CardDescription>
                        <Badge variant="secondary" className="mt-2">10+ years experience</Badge>
                     </div>

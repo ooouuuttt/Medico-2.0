@@ -20,6 +20,7 @@ import { db } from './firebase';
 import type { PrescriptionReaderOutput } from '@/ai/flows/prescription-reader';
 import { Medication } from './user-service';
 import { createNotification } from './notification-service';
+import { formatDoctorName } from './utils';
 
 
 export interface Prescription extends DocumentData {
@@ -70,7 +71,7 @@ export const getPrescriptions = (
           newlyAdded.forEach(prescription => {
               createNotification(uid, {
                 title: 'New E-Prescription Received',
-                description: `You have a new prescription from Dr. ${prescription.doctorName}.`,
+                description: `You have a new prescription from ${formatDoctorName(prescription.doctorName)}.`,
                 type: 'medicine'
               });
           });

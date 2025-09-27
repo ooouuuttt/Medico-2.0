@@ -44,6 +44,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { getUserProfile, UserProfile } from '@/lib/user-service';
 import { Skeleton } from './ui/skeleton';
+import { formatDoctorName } from '@/lib/utils';
 
 interface HealthRecordsProps {
     user: User;
@@ -157,7 +158,7 @@ const HealthRecords = ({ user }: HealthRecordsProps) => {
                             <AccordionContent className="p-4 pt-0">
                                 <div className="text-sm space-y-4 pt-4 border-t">
                                      <p>
-                                        <strong>Doctor:</strong> {consultation.doctor}
+                                        <strong>Doctor:</strong> {formatDoctorName(consultation.doctor)}
                                     </p>
                                     {consultation.summary && (
                                         <div className="bg-primary/5 p-3 rounded-lg space-y-2 border border-primary/20">
@@ -180,7 +181,7 @@ const HealthRecords = ({ user }: HealthRecordsProps) => {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <FileText className="text-primary" />
-                  <span>Prescription from Dr. {prescription.doctorName}</span>
+                  <span>Prescription from {formatDoctorName(prescription.doctorName)}</span>
                 </CardTitle>
                 <CardDescription className="pt-1">{new Date(prescription.date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
               </CardHeader>
