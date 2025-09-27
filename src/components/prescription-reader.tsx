@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -235,3 +236,4 @@ const PrescriptionReader = ({ user, setActiveTab }: PrescriptionReaderProps) => 
 };
 
 export default PrescriptionReader;
+
