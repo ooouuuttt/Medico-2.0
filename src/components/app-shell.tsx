@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare, ShoppingBag } from 'lucide-react';
+import { Home, Stethoscope, ClipboardList, User as UserIcon, LogOut, CalendarCheck, Languages, ChevronDown, FileText, MessageSquare, ShoppingBag, Mic, MicOff, Activity } from 'lucide-react';
 import { cn, formatDoctorName } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Dashboard from '@/components/dashboard';
@@ -37,6 +37,8 @@ import { createNotification } from '@/lib/notification-service';
 import { Prescription } from '@/lib/prescription-service';
 import { Pharmacy } from '@/lib/pharmacy-service';
 import OrderHistory from './order-history';
+import { useVoiceRecognition } from '@/hooks/use-voice-recognition';
+import { interpretCommand } from '@/ai/flows/voice-command-interpreter';
 
 export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat' | 'order-history';
 
@@ -72,6 +74,41 @@ export default function AppShell({ user }: AppShellProps) {
   const [chatTabState, setChatTabState] = useState<ChatTabState | undefined>();
   const { toast } = useToast();
   const { language, t, setLanguage } = useTranslation();
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
+
+  const handleCommand = async (command: string) => {
+    if (!command) return;
+    setIsProcessingCommand(true);
+    try {
+      const { intent } = await interpretCommand({ command });
+      if (intent && intent !== 'unknown') {
+        setActiveTab(intent);
+        toast({
+            title: "Navigating...",
+            description: `Switching to ${intent.replace('-', ' ')}.`,
+        });
+      } else {
+        toast({
+            variant: "destructive",
+            title: "Command not understood",
+            description: "Sorry, I didn't understand that. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error interpreting command:", error);
+       toast({
+            variant: "destructive",
+            title: "Voice Error",
+            description: "Could not process the voice command.",
+        });
+    } finally {
+        setIsProcessingCommand(false);
+    }
+  };
+
+  const { isListening, transcript, startListening, stopListening, isSupported } = useVoiceRecognition({
+      onTranscriptReady: handleCommand
+  });
 
 
   useEffect(() => {
@@ -214,6 +251,19 @@ export default function AppShell({ user }: AppShellProps) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {isSupported && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={isListening ? stopListening : startListening}
+                className={cn(
+                  'h-8 w-8 rounded-full',
+                  isListening && 'bg-destructive/20 text-destructive'
+                )}
+              >
+                {isProcessingCommand ? <Activity className="animate-spin" /> : (isListening ? <MicOff /> : <Mic />)}
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2 py-1 h-auto text-sm bg-primary/10 hover:bg-primary/20">
