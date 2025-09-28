@@ -36,6 +36,7 @@ export interface Order extends DocumentData {
   userId: string;
   pharmacyId: string;
   pharmacyName: string;
+  customerName: string;
   items: OrderItem[];
   total: number;
   status: OrderStatus;
@@ -46,6 +47,7 @@ export interface Order extends DocumentData {
 // Function to create a new order (for single medicine or full prescription)
 export const createOrder = async (
   userId: string,
+  customerName: string,
   pharmacy: Pharmacy,
   items: OrderItem[],
   total: number,
@@ -54,6 +56,7 @@ export const createOrder = async (
   try {
     const orderData = {
       userId,
+      customerName,
       pharmacyId: pharmacy.id,
       pharmacyName: pharmacy.pharmacyName,
       items,

@@ -192,7 +192,8 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
         quantity: cartItem.quantity
       }];
       const total = cartItem.medicine.price * cartItem.quantity;
-      await createOrder(user.uid, cartItem.pharmacy, items, total, 'single_med');
+      const customerName = await getPatientName(user.uid) || user.displayName || 'Anonymous';
+      await createOrder(user.uid, customerName, cartItem.pharmacy, items, total, 'single_med');
       setView('confirmation');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -732,4 +733,3 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
 };
 
 export default MedicineAvailability;
-
