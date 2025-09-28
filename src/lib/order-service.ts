@@ -62,7 +62,7 @@ export const createOrder = async (
       items,
       total,
       status: 'pending' as OrderStatus,
-      createdAt: serverTimestamp(),
+      createdAt: new Date().toISOString(),
       type,
     };
 
