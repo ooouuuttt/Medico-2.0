@@ -117,7 +117,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                     <div>
                         <CardTitle className="text-lg">{order.pharmacyName}</CardTitle>
                         <CardDescription className="pt-1">
-                            {new Date(order.createdAt.toDate()).toLocaleDateString('en-IN', {
+                            {new Date(order.createdAt).toLocaleDateString('en-IN', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -133,8 +133,8 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                 <div>
                      {order.items.map((item, index) => (
                         <div key={index} className="flex justify-between items-center text-sm">
-                            <p className='capitalize'>{item.medicine.name} <span className='text-muted-foreground'>x{item.quantity}</span></p>
-                            <p className='font-mono'>₹{(item.medicine.price * item.quantity).toFixed(2)}</p>
+                            <p className='capitalize'>{item.name} <span className='text-muted-foreground'>x{item.quantity}</span></p>
+                            
                         </div>
                      ))}
                      <Separator className='my-2'/>
@@ -163,3 +163,5 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
 };
 
 export default OrderHistory;
+
+    

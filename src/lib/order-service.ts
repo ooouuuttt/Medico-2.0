@@ -22,12 +22,8 @@ export type OrderStatus = 'pending' | 'ready' | 'completed';
 export type OrderType = 'single_med' | 'prescription';
 
 export interface OrderItem {
-  medicine: {
-    id?: string;
-    name: string;
-    manufacturer: string;
-    price: number;
-  };
+  medicineId: string;
+  name: string;
   quantity: number;
 }
 
@@ -40,7 +36,7 @@ export interface Order extends DocumentData {
   items: OrderItem[];
   total: number;
   status: OrderStatus;
-  createdAt: Timestamp;
+  createdAt: string; // Changed to string
   type: OrderType;
 }
 
@@ -108,7 +104,16 @@ export const getOrdersForUser = (
     (querySnapshot) => {
       const orders: Order[] = [];
       querySnapshot.forEach((doc) => {
-        orders.push({ id: doc.id, ...doc.data() } as Order);
+        const data = doc.data();
+        // Convert Firestore Timestamp to Date object for consistent handling
+        const order: Order = {
+          id: doc.id,
+          ...data,
+          // Ensure createdAt is handled as a string if it comes from ISO string,
+          // or convert from timestamp if it's still a timestamp
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+        } as Order;
+        orders.push(order);
       });
       callback(orders);
     },
@@ -120,3 +125,5 @@ export const getOrdersForUser = (
 
   return unsubscribe;
 };
+
+    

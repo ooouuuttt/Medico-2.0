@@ -183,12 +183,8 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
     
     try {
       const items: OrderItem[] = [{
-        medicine: {
-          id: cartItem.medicine.id,
-          name: cartItem.medicine.name,
-          manufacturer: cartItem.medicine.manufacturer,
-          price: cartItem.medicine.price
-        },
+        medicineId: cartItem.medicine.id,
+        name: cartItem.medicine.name,
         quantity: cartItem.quantity
       }];
       const total = cartItem.medicine.price * cartItem.quantity;
@@ -733,3 +729,5 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
 };
 
 export default MedicineAvailability;
+
+    
