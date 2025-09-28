@@ -535,10 +535,18 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
             <Card className="rounded-xl shadow-sm">
                 <CardHeader>
                     <CardTitle>{selectedPharmacy.pharmacyName}</CardTitle>
-                    <CardDescription className="flex items-center text-sm pt-1">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span>{selectedPharmacy.location}</span>
-                    </CardDescription>
+                    <div className="space-y-1 pt-1">
+                      <CardDescription className="flex items-center text-sm">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          <span>{selectedPharmacy.location}</span>
+                      </CardDescription>
+                      {selectedPharmacy.contactNumber && (
+                        <CardDescription className="flex items-center text-sm">
+                            <Phone className="w-4 h-4 mr-2" />
+                            <span>{selectedPharmacy.contactNumber}</span>
+                        </CardDescription>
+                      )}
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <h4 className='font-semibold'>Available Medicines</h4>
@@ -738,4 +746,5 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
 
 export default MedicineAvailability;
 
+    
     
