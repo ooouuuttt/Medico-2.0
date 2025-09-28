@@ -29,6 +29,7 @@ export interface Pharmacy extends DocumentData {
   isOpen: boolean;
   timings: string;
   email: string;
+  contactNumber?: string;
   kycUrl: string;
   licenseCertificateUrl: string;
   ownerName: string;

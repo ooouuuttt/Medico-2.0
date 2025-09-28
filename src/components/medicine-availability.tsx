@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send, FileText, Clock } from 'lucide-react';
+import { Search, MapPin, ShoppingCart, ArrowLeft, CheckCircle2, Minus, Plus, Building, ChevronDown, CheckCircle, XCircle, Send, FileText, Clock, Phone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { getPharmaciesWithStock, Pharmacy, Medicine } from '@/lib/pharmacy-service';
@@ -616,9 +616,17 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
                             {pharmacy.isOpen ? 'Open' : 'Closed'}
                         </Badge>
                       </div>
-                      <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Clock className="w-3 h-3 mr-1.5" />
-                            <span>{pharmacy.timings}</span>
+                      <div className="space-y-1 mt-1">
+                        <div className="flex items-center text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3 mr-1.5" />
+                              <span>{pharmacy.timings}</span>
+                        </div>
+                        {pharmacy.contactNumber && (
+                           <div className="flex items-center text-xs text-muted-foreground">
+                                <Phone className="w-3 h-3 mr-1.5" />
+                                <span>{pharmacy.contactNumber}</span>
+                           </div>
+                        )}
                       </div>
                       {medInfo && (
                          <div className='text-right mt-2 border-t pt-2'>
