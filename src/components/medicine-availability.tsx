@@ -541,7 +541,7 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
                           <span>{selectedPharmacy.location}</span>
                       </CardDescription>
                       {selectedPharmacy.contactNumber && (
-                        <CardDescription className="flex items-center text-sm">
+                        <CardDescription className="flex items-center text-sm pt-1">
                             <Phone className="w-4 h-4 mr-2" />
                             <span>{selectedPharmacy.contactNumber}</span>
                         </CardDescription>
@@ -629,12 +629,6 @@ const MedicineAvailability = ({ initialState, setActiveTab, user }: MedicineAvai
                               <Clock className="w-3 h-3 mr-1.5" />
                               <span>{pharmacy.timings}</span>
                         </div>
-                        {pharmacy.contactNumber && (
-                           <div className="flex items-center text-xs text-muted-foreground">
-                                <Phone className="w-3 h-3 mr-1.5" />
-                                <span>{pharmacy.contactNumber}</span>
-                           </div>
-                        )}
                       </div>
                       {medInfo && (
                          <div className='text-right mt-2 border-t pt-2'>
