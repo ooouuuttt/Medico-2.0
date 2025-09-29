@@ -150,6 +150,9 @@ const AuthPage = ({ onSignIn }: AuthPageProps) => {
                     <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
+                <p className="text-sm text-destructive text-center mb-4">
+                  Please sign up using email and password before logging in with Google.
+                </p>
                 <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={loading}>
                   <Chrome className="mr-2 h-4 w-4" />
                   Sign in with Google
