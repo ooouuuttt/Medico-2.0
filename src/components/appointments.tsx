@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -143,9 +144,9 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
         setIsCancelDialogOpen(true);
     };
 
-
-    const upcomingAppointments = appointments.filter(a => a.status === 'upcoming');
-    const pastAppointments = appointments.filter(a => a.status !== 'upcoming');
+    const now = new Date();
+    const upcomingAppointments = appointments.filter(a => a.status === 'upcoming' && a.date.toDate() > now);
+    const pastAppointments = appointments.filter(a => a.status !== 'upcoming' || a.date.toDate() <= now);
     
     const formatDate = (timestamp: Timestamp) => {
         if (!timestamp) return new Date();
@@ -228,7 +229,11 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
             Past
         </h3>
         {pastAppointments.length > 0 ? (
-            pastAppointments.map(apt => (
+            pastAppointments.map(apt => {
+                 const isCompleted = apt.status === 'completed' || (apt.status === 'upcoming' && apt.date.toDate() <= now);
+                 const statusLabel = isCompleted ? 'Completed' : 'Cancelled';
+
+                return (
                 <Card key={apt.id} className="shadow-sm rounded-xl opacity-80">
                     <CardContent className="p-4 pb-0">
                         <div className="flex items-center justify-between">
@@ -244,8 +249,8 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                                     </p>
                                 </div>
                             </div>
-                            <Badge variant={apt.status === 'completed' ? 'default' : (apt.status === 'cancelled' ? 'destructive' : 'secondary')} className='capitalize'>
-                                {apt.status}
+                            <Badge variant={isCompleted ? 'default' : 'destructive'} className='capitalize'>
+                                {statusLabel}
                             </Badge>
                         </div>
                          {apt.status === 'cancelled' && apt.cancellationReason && (
@@ -267,7 +272,8 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                         </CardFooter>
                     )}
                 </Card>
-            ))
+                )
+            })
         ) : (
             <p className="text-muted-foreground text-sm text-center py-4">You have no past appointments.</p>
         )}
@@ -293,6 +299,6 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
 
     </div>
   );
-};
+}
 
 export default Appointments;
