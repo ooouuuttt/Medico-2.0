@@ -21,6 +21,7 @@ export interface Notification extends DocumentData {
   type: 'appointment' | 'medicine' | 'alert' | 'news' | 'trends';
   createdAt: Timestamp;
   isRead: boolean;
+  url?: string;
 }
 
 // Function to create a new notification

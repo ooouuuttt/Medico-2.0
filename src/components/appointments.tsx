@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info, RefreshCw } from 'lucide-react';
+import { Calendar, Video, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Info, RefreshCw, ExternalLink } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
@@ -36,6 +35,8 @@ interface Appointment extends DocumentData {
     status: 'upcoming' | 'completed' | 'cancelled';
     cancellationReason?: string;
     cancelledBy?: 'patient' | 'doctor';
+    start_url?: string;
+    join_url?: string;
 }
 
 interface AppointmentsProps {
@@ -198,7 +199,19 @@ const Appointments = ({ user, setActiveTab }: AppointmentsProps) => {
                             </div>
                         </div>
                         <div className="flex gap-2 mt-4">
-                            <Button className="w-full">Join Call</Button>
+                           {apt.type === 'video' && apt.join_url ? (
+                                <Button className="w-full" asChild>
+                                    <a href={apt.join_url} target="_blank" rel="noopener noreferrer">
+                                        Join Video Call <ExternalLink className="ml-2 h-4 w-4" />
+                                    </a>
+                                </Button>
+                            ) : apt.type === 'chat' ? (
+                                <Button className="w-full" onClick={() => {/* logic to start chat */}}>
+                                    Start Chat
+                                </Button>
+                            ) : (
+                                <Button className="w-full">Join Call</Button>
+                            )}
                             <Button variant="destructive" className="w-full" onClick={() => openCancelDialog(apt.id)}>Cancel</Button>
                         </div>
                     </CardContent>

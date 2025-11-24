@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,6 +22,7 @@ import { getPatientName } from '@/lib/user-service';
 import { createOrGetChat } from '@/lib/chat-service';
 import { Tab } from './app-shell';
 import { createNotification } from '@/lib/notification-service';
+import { createZoomMeeting } from '@/lib/zoom-service';
 
 
 interface Doctor extends DocumentData {
@@ -57,6 +57,7 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBooking, setIsBooking] = useState(false);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -187,12 +188,10 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
         return;
     }
     
-    // Open Razorpay payment link
-    const paymentUrl = 'https://razorpay.me/@amitlaxmanmohan';
-    window.open(paymentUrl, '_blank');
+    setIsBooking(true);
 
     try {
-        const patientName = await getPatientName(user.uid);
+        const patientName = await getPatientName(user.uid) || user.displayName || 'Unknown';
 
         const appointmentDate = new Date(selectedDate);
         const [time, period] = selectedTime.split(' ');
@@ -205,32 +204,60 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
             hours = 0;
         }
         appointmentDate.setHours(hours, minutes, 0, 0);
+        
+        let zoomLinks = { start_url: '', join_url: '' };
+        if (consultationType === 'video') {
+            const topic = `Consultation: ${formatDoctorName(selectedDoctor.name)} and ${patientName}`;
+            const meetingResult = await createZoomMeeting({ topic, startTime: appointmentDate.toISOString() });
+            if (meetingResult.error) {
+              throw new Error(meetingResult.error);
+            }
+            zoomLinks.start_url = meetingResult.start_url;
+            zoomLinks.join_url = meetingResult.join_url;
+        }
 
-        await addDoc(collection(db, "appointments"), {
+        const appointmentData = {
             patientId: user.uid,
-            patientName: patientName || user.displayName || 'Unknown',
+            patientName: patientName,
             doctorId: selectedDoctor.id,
             doctorName: selectedDoctor.name,
             specialty: selectedDoctor.specialization,
             type: consultationType,
             date: Timestamp.fromDate(appointmentDate),
-            status: 'upcoming',
+            status: 'upcoming' as const,
+            start_url: zoomLinks.start_url,
+            join_url: zoomLinks.join_url,
+        };
+
+        const docRef = await addDoc(collection(db, "appointments"), appointmentData);
+
+        // Patient notification
+        await createNotification(user.uid, {
+            title: 'Appointment Booked!',
+            description: `Your ${consultationType} with ${formatDoctorName(selectedDoctor.name)} is confirmed. ${consultationType === 'video' ? 'Tap to join.' : ''}`,
+            type: 'appointment',
+            url: zoomLinks.join_url || `/appointments/${docRef.id}`,
         });
 
-        await createNotification(user.uid, {
-            title: 'Appointment Booked',
-            description: `Your ${consultationType} appointment with ${formatDoctorName(selectedDoctor.name)} is confirmed.`,
-            type: 'appointment'
+        // Doctor notification
+        await createNotification(selectedDoctor.id, {
+            title: 'New Consultation Scheduled',
+            description: `You have a new ${consultationType} with ${patientName}. ${consultationType === 'video' ? 'Tap to start.' : ''}`,
+            type: 'appointment',
+            url: zoomLinks.start_url || `/appointments/${docRef.id}`,
         });
+
 
         setStep('confirmation');
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error booking appointment: ", error);
         toast({
             variant: "destructive",
             title: "Booking Error",
-            description: "Could not save the appointment. Please try again.",
+            description: error.message || "Could not save the appointment. Please try again.",
         });
+    } finally {
+        setIsBooking(false);
     }
   };
 
@@ -378,8 +405,13 @@ const Teleconsultation = ({ user, setActiveTab }: TeleconsultationProps) => {
             <div className='text-center'>
               <p className='text-sm text-muted-foreground'>You will be redirected to Razorpay to complete your payment.</p>
             </div>
-            <Button className="w-full" size="lg" onClick={handlePayment}>
-              Pay ₹{consultationType ? consultationPrices[consultationType as keyof typeof consultationPrices] : 0}
+            <Button className="w-full" size="lg" onClick={handlePayment} disabled={isBooking}>
+              {isBooking ? (
+                <>
+                  <LucideIcons.Activity className="mr-2 h-4 w-4 animate-spin" />
+                  Booking...
+                </>
+              ) : `Pay ₹${consultationType ? consultationPrices[consultationType as keyof typeof consultationPrices] : 0}`}
             </Button>
           </CardContent>
         </Card>
