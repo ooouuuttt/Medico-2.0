@@ -39,8 +39,9 @@ import { Pharmacy } from '@/lib/pharmacy-service';
 import OrderHistory from './order-history';
 import { useVoiceRecognition } from '@/hooks/use-voice-recognition';
 import { interpretCommand } from '@/ai/flows/voice-command-interpreter';
+import Notifications from './notifications';
 
-export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat' | 'order-history';
+export type Tab = 'home' | 'symptoms' | 'consult' | 'records' | 'profile' | 'medical' | 'scan-prescription' | 'appointments' | 'prescriptions' | 'chats' | 'chat' | 'order-history' | 'notifications';
 
 export interface MedicalTabState {
   pharmacy?: Pharmacy;
@@ -92,7 +93,7 @@ export default function AppShell({ user }: AppShellProps) {
     try {
       const { intent } = await interpretCommand({ command });
       if (intent && intent !== 'unknown') {
-        setActiveTab(intent);
+        setActiveTab(intent as Tab);
         toast({
             title: "Navigating...",
             description: `Switching to ${intent.replace('-', ' ')}.`,
@@ -235,6 +236,8 @@ export default function AppShell({ user }: AppShellProps) {
       case 'chat':
         if (!chatTabState) return <ChatList user={user} setActiveTab={handleSetActiveTab} />;
         return <ChatConsultation chatId={chatTabState.chatId} doctorName={chatTabState.doctorName} doctorAvatar={chatTabState.doctorAvatar} user={user} onEnd={() => setActiveTab('chats')} />;
+      case 'notifications':
+        return <Notifications user={user} setActiveTab={handleSetActiveTab} />;
       case 'profile':
         return <Profile user={user} />;
       default:

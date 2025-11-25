@@ -140,7 +140,7 @@ const Dashboard: FC<DashboardProps> = ({ setActiveTab }) => {
           </div>
         </CardContent>
         <CardFooter className='p-2 bg-secondary/30'>
-            <Button variant="ghost" size="sm" className='w-full'>View All Notifications</Button>
+            <Button variant="ghost" size="sm" className='w-full' onClick={() => setActiveTab('notifications')}>View All Notifications</Button>
         </CardFooter>
       </Card>
       
