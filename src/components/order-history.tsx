@@ -95,7 +95,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
   const TimelineStep = ({ status, isCurrent, isCompleted, isFirst }: { status: OrderStatus, isCurrent: boolean, isCompleted: boolean, isFirst: boolean }) => {
     const config = statusConfig[status];
     const Icon = config.icon;
-    const isActive = isCurrent || isCompleted;
+    const stepIsActive = isCurrent || isCompleted;
 
     return (
       <div className="relative flex flex-col items-center justify-start flex-1">
@@ -106,10 +106,14 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
             isCompleted ? 'bg-primary' : 'bg-border'
           )} />
           
-          <div className={cn("relative z-10 flex h-7 w-7 items-center justify-center rounded-full", isActive ? 'bg-primary' : 'bg-border', isCurrent && "ring-2 ring-primary ring-offset-2")}>
-              <Icon className={cn("h-4 w-4", isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
+          <div className={cn(
+              "relative z-10 flex h-7 w-7 items-center justify-center rounded-full", 
+              stepIsActive ? 'bg-primary' : 'bg-border', 
+              isCurrent && "ring-2 ring-primary ring-offset-2"
+          )}>
+              <Icon className={cn("h-4 w-4", stepIsActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
           </div>
-          <span className={cn("text-xs text-center mt-2", isActive ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+          <span className={cn("text-xs text-center mt-2", stepIsActive ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
               {config.label}
           </span>
       </div>
@@ -138,7 +142,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                             })}
                         </CardDescription>
                     </div>
-                    {statusInfo && (
+                     {statusInfo && (
                       <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className='capitalize'>
                           {statusInfo.label}
                       </Badge>
