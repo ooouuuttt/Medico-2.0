@@ -98,17 +98,16 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
             "absolute top-[14px] h-0.5 w-full",
             !isFirst && "left-[-50%]",
             isFirst && "left-0",
-            isCompleted || isCurrent ? 'bg-primary' : 'bg-border'
+            (isCompleted || isCurrent) ? 'bg-primary' : 'bg-border'
           )} />
           
           {/* Circle and Icon */}
           <div className={cn(
               "relative z-10 flex h-7 w-7 items-center justify-center rounded-full", 
-              isCurrent && "ring-2 ring-primary ring-offset-2",
               isCompleted ? 'bg-primary' : 'bg-border',
-              isCurrent ? 'bg-primary' : 'bg-border'
+              isCurrent && "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
           )}>
-              <Icon className={cn("h-4 w-4", isCompleted || isCurrent ? 'text-primary-foreground' : 'text-muted-foreground')} />
+              <Icon className={cn("h-4 w-4", (isCompleted || isCurrent) ? 'text-primary-foreground' : 'text-muted-foreground')} />
           </div>
 
           {/* Label */}
