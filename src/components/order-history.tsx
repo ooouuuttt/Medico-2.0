@@ -92,19 +92,21 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     );
   }
   
-  const TimelineStep = ({ status, isActive, isFirst, isLast }: { status: OrderStatus, isActive: boolean, isFirst: boolean, isLast: boolean }) => {
+  const TimelineStep = ({ status, isCurrent, isCompleted, isFirst }: { status: OrderStatus, isCurrent: boolean, isCompleted: boolean, isFirst: boolean }) => {
     const config = statusConfig[status];
     const Icon = config.icon;
+    const isActive = isCurrent || isCompleted;
+
     return (
       <div className="relative flex flex-col items-center justify-start flex-1">
           <div className={cn(
             "absolute top-[14px] w-full h-0.5",
             !isFirst && "left-[-50%]",
             isFirst && "left-0",
-            isActive ? 'bg-primary' : 'bg-border'
+            isCompleted ? 'bg-primary' : 'bg-border'
           )} />
           
-          <div className={cn("relative z-10 flex h-7 w-7 items-center justify-center rounded-full", isActive ? 'bg-primary' : 'bg-border')}>
+          <div className={cn("relative z-10 flex h-7 w-7 items-center justify-center rounded-full", isActive ? 'bg-primary' : 'bg-border', isCurrent && "ring-2 ring-primary ring-offset-2")}>
               <Icon className={cn("h-4 w-4", isActive ? 'text-primary-foreground' : 'text-muted-foreground')} />
           </div>
           <span className={cn("text-xs text-center mt-2", isActive ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
@@ -163,7 +165,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                       <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
                       <div className="flex justify-between items-start w-full">
                         {statuses.map((status, index) => (
-                            <TimelineStep key={status} status={status} isActive={index <= currentStatusIndex} isFirst={index === 0} isLast={index === statuses.length - 1}/>
+                            <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} />
                         ))}
                       </div>
                       {statusInfo && <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>}
