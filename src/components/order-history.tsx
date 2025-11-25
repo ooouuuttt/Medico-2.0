@@ -109,6 +109,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
       {orders.map((order) => {
         const statuses: Array<keyof typeof statusConfig> = ['pending', 'ready', 'completed'];
         const currentStatusIndex = statuses.indexOf(order.status);
+        const statusInfo = order.status ? statusConfig[order.status] : null;
 
         return (
             <Card key={order.id} className="shadow-sm rounded-xl">
@@ -124,9 +125,11 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                             })}
                         </CardDescription>
                     </div>
-                    <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className='capitalize'>
-                        {statusConfig[order.status].label}
-                    </Badge>
+                    {statusInfo && (
+                      <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className='capitalize'>
+                          {statusInfo.label}
+                      </Badge>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -144,15 +147,17 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                     </div>
                 </div>
                 
-                <div className='pt-4 border-t'>
-                    <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
-                    <div className="flex justify-between items-start w-full">
-                       {statuses.map((status, index) => (
-                           <TimelineStep key={status} status={status} isActive={index <= currentStatusIndex} isFirst={index === 0} isLast={index === statuses.length - 1}/>
-                       ))}
-                    </div>
-                     <p className='text-xs text-muted-foreground mt-4 text-center'>{statusConfig[order.status].description}</p>
-                </div>
+                {statusInfo && (
+                  <div className='pt-4 border-t'>
+                      <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
+                      <div className="flex justify-between items-start w-full">
+                        {statuses.map((status, index) => (
+                            <TimelineStep key={status} status={status} isActive={index <= currentStatusIndex} isFirst={index === 0} isLast={index === statuses.length - 1}/>
+                        ))}
+                      </div>
+                      <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>
+                  </div>
+                )}
 
             </CardContent>
             </Card>
@@ -163,5 +168,3 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
 };
 
 export default OrderHistory;
-
-    
