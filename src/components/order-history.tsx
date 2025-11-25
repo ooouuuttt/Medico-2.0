@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { getOrdersForUser, Order } from '@/lib/order-service';
+import { getOrdersForUser, Order, OrderStatus } from '@/lib/order-service';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { ShoppingBag, Package, CheckCircle, Clock } from 'lucide-react';
+import { ShoppingBag, Package, CheckCircle, Clock, PackageSearch } from 'lucide-react';
 import type { Tab } from './app-shell';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
@@ -18,12 +18,23 @@ interface OrderHistoryProps {
   setActiveTab: (tab: Tab, state?: any) => void;
 }
 
-const statusConfig = {
+const statusConfig: Record<OrderStatus, {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    description: string;
+}> = {
   pending: {
     label: 'Pending',
     icon: Clock,
     color: 'bg-yellow-500',
     description: 'Your order has been placed and is waiting for confirmation from the pharmacy.',
+  },
+  processing: {
+    label: 'Processing',
+    icon: PackageSearch,
+    color: 'bg-orange-500',
+    description: 'The pharmacy is preparing your order.',
   },
   ready: {
     label: 'Ready for Pickup',
@@ -81,7 +92,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     );
   }
   
-  const TimelineStep = ({ status, isActive, isFirst, isLast }: { status: keyof typeof statusConfig, isActive: boolean, isFirst: boolean, isLast: boolean }) => {
+  const TimelineStep = ({ status, isActive, isFirst, isLast }: { status: OrderStatus, isActive: boolean, isFirst: boolean, isLast: boolean }) => {
     const config = statusConfig[status];
     const Icon = config.icon;
     return (
@@ -107,8 +118,8 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <h2 className="text-2xl font-bold font-headline">Your Order History</h2>
       {orders.map((order) => {
-        const statuses: Array<keyof typeof statusConfig> = ['pending', 'ready', 'completed'];
-        const currentStatusIndex = statuses.indexOf(order.status);
+        const statuses: OrderStatus[] = ['pending', 'processing', 'ready', 'completed'];
+        const currentStatusIndex = order.status ? statuses.indexOf(order.status) : -1;
         const statusInfo = order.status ? statusConfig[order.status] : null;
 
         return (

@@ -18,7 +18,7 @@ import { createNotification } from './notification-service';
 import { Medication } from './user-service';
 import { Pharmacy } from './pharmacy-service';
 
-export type OrderStatus = 'pending' | 'ready' | 'completed';
+export type OrderStatus = 'pending' | 'processing' | 'ready' | 'completed';
 export type OrderType = 'single_med' | 'prescription';
 
 export interface OrderItem {
