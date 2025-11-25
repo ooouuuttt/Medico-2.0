@@ -4,14 +4,15 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { getOrdersForUser, Order, OrderStatus } from '@/lib/order-service';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { ShoppingBag, Package, CheckCircle, Clock, PackageSearch } from 'lucide-react';
+import { ShoppingBag, Package, CheckCircle, Clock, PackageSearch, XCircle } from 'lucide-react';
 import type { Tab } from './app-shell';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 interface OrderHistoryProps {
   user: User;
@@ -42,6 +43,11 @@ const statusConfig: Record<OrderStatus, {
     label: 'Completed',
     icon: CheckCircle,
     description: 'Your order has been picked up.',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    icon: XCircle,
+    description: 'This order has been cancelled.',
   },
 };
 
@@ -87,7 +93,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     );
   }
   
-  const TimelineStep = ({ status, isCurrent, isCompleted, isFirst }: { status: OrderStatus, isCurrent: boolean, isCompleted: boolean, isFirst: boolean }) => {
+  const TimelineStep = ({ status, isCurrent, isCompleted, isFirst, isCancelled }: { status: OrderStatus, isCurrent: boolean, isCompleted: boolean, isFirst: boolean, isCancelled: boolean }) => {
     const config = statusConfig[status];
     const Icon = config.icon;
     
@@ -98,20 +104,22 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
             "absolute top-[14px] h-0.5 w-full",
             !isFirst && "left-[-50%]",
             isFirst && "left-0",
-            (isCompleted || isCurrent) ? 'bg-primary' : 'bg-border'
+            (isCompleted || isCurrent) && !isCancelled ? 'bg-primary' : 'bg-border',
+             isCancelled && isCurrent && 'bg-destructive'
           )} />
           
           {/* Circle and Icon */}
           <div className={cn(
               "relative z-10 flex h-7 w-7 items-center justify-center rounded-full", 
-              isCompleted ? 'bg-primary' : 'bg-border',
-              isCurrent && "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+              isCompleted && !isCancelled ? 'bg-primary' : 'bg-border',
+              isCurrent && !isCancelled && "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background",
+              isCancelled && isCurrent && "bg-destructive ring-2 ring-destructive ring-offset-2 ring-offset-background"
           )}>
-              <Icon className={cn("h-4 w-4", (isCompleted || isCurrent) ? 'text-primary-foreground' : 'text-muted-foreground')} />
+              <Icon className={cn("h-4 w-4", (isCompleted || isCurrent) ? 'text-primary-foreground' : 'text-muted-foreground', isCancelled && isCurrent && 'text-destructive-foreground')} />
           </div>
 
           {/* Label */}
-          <span className={cn("text-xs text-center mt-2", (isCompleted || isCurrent) ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+          <span className={cn("text-xs text-center mt-2", (isCompleted || isCurrent) ? 'font-semibold text-foreground' : 'text-muted-foreground', isCancelled && isCurrent && 'text-destructive')}>
               {config.label}
           </span>
       </div>
@@ -123,7 +131,8 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
       <h2 className="text-2xl font-bold font-headline">Your Order History</h2>
       {orders.map((order) => {
         const statuses: OrderStatus[] = ['pending', 'processing', 'ready', 'completed'];
-        const currentStatusIndex = order.status ? statuses.indexOf(order.status) : -1;
+        const isCancelled = order.status === 'cancelled';
+        const currentStatusIndex = isCancelled ? -1 : (order.status ? statuses.indexOf(order.status) : -1);
         const statusInfo = order.status ? statusConfig[order.status] : null;
 
         return (
@@ -141,7 +150,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                         </CardDescription>
                     </div>
                      {statusInfo && (
-                      <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className='capitalize'>
+                      <Badge variant={order.status === 'completed' ? 'default' : isCancelled ? 'destructive' : 'secondary'} className='capitalize'>
                           {statusInfo.label}
                       </Badge>
                     )}
@@ -165,12 +174,24 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                 {order.status && (
                   <div className='pt-4 border-t'>
                       <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
-                      <div className="flex justify-between items-start w-full">
-                        {statuses.map((status, index) => (
-                            <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} />
-                        ))}
-                      </div>
-                      {statusInfo && <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>}
+                      {isCancelled ? (
+                         <Alert variant="destructive" className="mt-4">
+                            <XCircle className="h-4 w-4" />
+                            <AlertTitle>Order Cancelled</AlertTitle>
+                            <AlertDescription>
+                                {order.cancellationReason || 'This order was cancelled by the pharmacy.'}
+                            </AlertDescription>
+                        </Alert>
+                      ) : (
+                        <>
+                            <div className="flex justify-between items-start w-full">
+                                {statuses.map((status, index) => (
+                                    <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} isCancelled={false} />
+                                ))}
+                            </div>
+                            {statusInfo && <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>}
+                        </>
+                      )}
                   </div>
                 )}
 

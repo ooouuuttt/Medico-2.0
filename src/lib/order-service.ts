@@ -17,8 +17,9 @@ import type { CartItem } from '@/components/medicine-availability';
 import { createNotification } from './notification-service';
 import { Medication } from './user-service';
 import { Pharmacy } from './pharmacy-service';
+import { useRef } from 'react';
 
-export type OrderStatus = 'pending' | 'processing' | 'ready' | 'completed';
+export type OrderStatus = 'pending' | 'processing' | 'ready' | 'completed' | 'cancelled';
 export type OrderType = 'single_med' | 'prescription';
 
 export interface OrderItem {
@@ -38,6 +39,7 @@ export interface Order extends DocumentData {
   status: OrderStatus;
   createdAt: string; // Changed to string
   type: OrderType;
+  cancellationReason?: string;
 }
 
 // Function to create a new order (for single medicine or full prescription)
@@ -92,6 +94,8 @@ export const getOrdersForUser = (
     callback([]);
     return () => {};
   }
+  
+  const notifiedCancellations = new Set<string>();
 
   const q = query(
     collection(db, 'orders'),
@@ -105,15 +109,25 @@ export const getOrdersForUser = (
       const orders: Order[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Convert Firestore Timestamp to Date object for consistent handling
         const order: Order = {
           id: doc.id,
           ...data,
-          // Ensure createdAt is handled as a string if it comes from ISO string,
-          // or convert from timestamp if it's still a timestamp
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
         } as Order;
         orders.push(order);
+
+        // Reliable check for pharmacy cancellations
+        if (
+            order.status === 'cancelled' &&
+            !notifiedCancellations.has(order.id)
+        ) {
+            createNotification(userId, {
+                title: 'Order Cancelled',
+                description: `Your order from ${order.pharmacyName} was cancelled. Reason: ${order.cancellationReason || 'No reason provided.'}`,
+                type: 'alert'
+            });
+            notifiedCancellations.add(order.id);
+        }
       });
       callback(orders);
     },
@@ -125,5 +139,3 @@ export const getOrdersForUser = (
 
   return unsubscribe;
 };
-
-    
