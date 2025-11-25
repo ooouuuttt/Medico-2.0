@@ -21,31 +21,26 @@ interface OrderHistoryProps {
 const statusConfig: Record<OrderStatus, {
     label: string;
     icon: React.ElementType;
-    color: string;
     description: string;
 }> = {
   pending: {
     label: 'Pending',
     icon: Clock,
-    color: 'bg-yellow-500',
     description: 'Your order has been placed and is waiting for confirmation from the pharmacy.',
   },
   processing: {
     label: 'Processing',
     icon: PackageSearch,
-    color: 'bg-orange-500',
     description: 'The pharmacy is preparing your order.',
   },
   ready: {
     label: 'Ready for Pickup',
     icon: Package,
-    color: 'bg-blue-500',
     description: 'Your order is packed and ready for you to pick up from the pharmacy.',
   },
   completed: {
     label: 'Completed',
     icon: CheckCircle,
-    color: 'bg-green-500',
     description: 'Your order has been picked up.',
   },
 };
@@ -103,16 +98,17 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
             "absolute top-[14px] h-0.5 w-full",
             !isFirst && "left-[-50%]",
             isFirst && "left-0",
-            isCompleted ? 'bg-primary' : 'bg-border'
+            isCompleted || isCurrent ? 'bg-primary' : 'bg-border'
           )} />
           
           {/* Circle and Icon */}
           <div className={cn(
               "relative z-10 flex h-7 w-7 items-center justify-center rounded-full", 
-              (isCompleted || isCurrent) ? 'bg-primary' : 'bg-border', 
-              isCurrent && "ring-2 ring-primary ring-offset-2"
+              isCurrent && "ring-2 ring-primary ring-offset-2",
+              isCompleted ? 'bg-primary' : 'bg-border',
+              isCurrent ? 'bg-primary' : 'bg-border'
           )}>
-              <Icon className={cn("h-4 w-4", (isCompleted || isCurrent) ? 'text-primary-foreground' : 'text-muted-foreground')} />
+              <Icon className={cn("h-4 w-4", isCompleted || isCurrent ? 'text-primary-foreground' : 'text-muted-foreground')} />
           </div>
 
           {/* Label */}
