@@ -114,19 +114,23 @@ export const getOrdersForUser = (
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
         } as Order;
-        orders.push(order);
+        
+        // This check ensures we only process orders that have a status field.
+        if (order.status) {
+            orders.push(order);
 
-        // Reliable check for pharmacy cancellations
-        if (
-            order.status === 'cancelled' &&
-            !notifiedCancellations.has(order.id)
-        ) {
-            createNotification(userId, {
-                title: 'Order Cancelled',
-                description: `Your order from ${order.pharmacyName} was cancelled. Reason: ${order.cancellationReason || 'No reason provided.'}`,
-                type: 'alert'
-            });
-            notifiedCancellations.add(order.id);
+            // Reliable check for pharmacy cancellations
+            if (
+                order.status === 'cancelled' &&
+                !notifiedCancellations.has(order.id)
+            ) {
+                createNotification(userId, {
+                    title: 'Order Cancelled',
+                    description: `Your order from ${order.pharmacyName} was cancelled. Reason: ${order.cancellationReason || 'No reason provided.'}`,
+                    type: 'alert'
+                });
+                notifiedCancellations.add(order.id);
+            }
         }
       });
       callback(orders);

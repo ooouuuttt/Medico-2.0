@@ -97,6 +97,8 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     const config = statusConfig[status];
     const Icon = config.icon;
     
+    const isDone = isCompleted || isCurrent;
+
     return (
       <div className="relative flex flex-col items-center justify-start flex-1">
           {/* Connecting line */}
@@ -104,22 +106,22 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
             "absolute top-[14px] h-0.5 w-full",
             !isFirst && "left-[-50%]",
             isFirst && "left-0",
-            (isCompleted || isCurrent) && !isCancelled ? 'bg-primary' : 'bg-border',
-             isCancelled && isCurrent && 'bg-destructive'
+            isDone && !isCancelled ? 'bg-primary' : 'bg-border',
+            isCancelled && 'bg-destructive'
           )} />
           
           {/* Circle and Icon */}
           <div className={cn(
               "relative z-10 flex h-7 w-7 items-center justify-center rounded-full", 
-              isCompleted && !isCancelled ? 'bg-primary' : 'bg-border',
-              isCurrent && !isCancelled && "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-background",
-              isCancelled && isCurrent && "bg-destructive ring-2 ring-destructive ring-offset-2 ring-offset-background"
+              isDone && !isCancelled ? 'bg-primary' : 'bg-border',
+              isCurrent && !isCancelled && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+              isCancelled && "bg-destructive"
           )}>
-              <Icon className={cn("h-4 w-4", (isCompleted || isCurrent) ? 'text-primary-foreground' : 'text-muted-foreground', isCancelled && isCurrent && 'text-destructive-foreground')} />
+              <Icon className={cn("h-4 w-4", isDone || isCancelled ? 'text-primary-foreground' : 'text-muted-foreground')} />
           </div>
 
           {/* Label */}
-          <span className={cn("text-xs text-center mt-2", (isCompleted || isCurrent) ? 'font-semibold text-foreground' : 'text-muted-foreground', isCancelled && isCurrent && 'text-destructive')}>
+          <span className={cn("text-xs text-center mt-2", isDone ? 'font-semibold text-foreground' : 'text-muted-foreground', isCancelled && 'text-destructive')}>
               {config.label}
           </span>
       </div>
@@ -173,7 +175,6 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                 
                 {order.status && (
                   <div className='pt-4 border-t'>
-                      <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
                       {isCancelled ? (
                          <Alert variant="destructive" className="mt-4">
                             <XCircle className="h-4 w-4" />
@@ -184,6 +185,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                         </Alert>
                       ) : (
                         <>
+                            <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
                             <div className="flex justify-between items-start w-full">
                                 {statuses.map((status, index) => (
                                     <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} isCancelled={false} />
