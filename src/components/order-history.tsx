@@ -158,7 +158,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                     </div>
                 </div>
                 
-                {statusInfo && (
+                {order.status && (
                   <div className='pt-4 border-t'>
                       <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
                       <div className="flex justify-between items-start w-full">
@@ -166,7 +166,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                             <TimelineStep key={status} status={status} isActive={index <= currentStatusIndex} isFirst={index === 0} isLast={index === statuses.length - 1}/>
                         ))}
                       </div>
-                      <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>
+                      {statusInfo && <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>}
                   </div>
                 )}
 
