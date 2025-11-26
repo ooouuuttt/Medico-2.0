@@ -132,10 +132,40 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
     <div className="space-y-6 animate-in fade-in duration-500">
       <h2 className="text-2xl font-bold font-headline">Your Order History</h2>
       {orders.map((order) => {
+        // canonical status keys used for timeline ordering
         const statuses: OrderStatus[] = ['pending', 'processing', 'ready', 'completed'];
-        const isCancelled = order.status === 'cancelled';
-        const currentStatusIndex = isCancelled ? -1 : (order.status ? statuses.indexOf(order.status) : -1);
-        const statusInfo = order.status ? statusConfig[order.status] : null;
+
+        // order.status in the DB may sometimes be stored as a human-friendly label
+        // (eg. 'Pending' or 'Ready for Pickup') or as the canonical key ('pending').
+        // Resolve a canonical key to drive the timeline rendering.
+        const rawStatus = (order as any).status as string | undefined;
+
+        // Try direct match first (exact canonical key)
+        let resolvedStatus: OrderStatus | 'cancelled' | null = null;
+        if (rawStatus && (['pending', 'processing', 'ready', 'completed', 'cancelled'] as string[]).includes(rawStatus)) {
+          resolvedStatus = rawStatus as OrderStatus | 'cancelled';
+        } else if (rawStatus) {
+          // Try to match by label (case-insensitive)
+          const lower = rawStatus.toString().toLowerCase();
+          const matchedKey = (Object.keys(statusConfig) as Array<OrderStatus>).find((k) => {
+            return statusConfig[k].label.toLowerCase() === lower || k.toLowerCase() === lower;
+          });
+          if (matchedKey) {
+            resolvedStatus = matchedKey;
+          } else if (lower === 'cancelled' || lower === 'canceled') {
+            resolvedStatus = 'cancelled';
+          } else {
+            // fallback: try to convert friendly labels to a key by basic replacements
+            if (lower.includes('pending')) resolvedStatus = 'pending';
+            else if (lower.includes('process')) resolvedStatus = 'processing';
+            else if (lower.includes('ready')) resolvedStatus = 'ready';
+            else if (lower.includes('complete')) resolvedStatus = 'completed';
+          }
+        }
+
+        const isCancelled = resolvedStatus === 'cancelled' || rawStatus === 'cancelled';
+        const currentStatusIndex = isCancelled ? -1 : (resolvedStatus ? statuses.indexOf(resolvedStatus as OrderStatus) : -1);
+        const statusInfo = resolvedStatus && resolvedStatus !== 'cancelled' ? statusConfig[resolvedStatus as OrderStatus] : null;
 
         return (
             <Card key={order.id} className="shadow-sm rounded-xl">
@@ -152,7 +182,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                         </CardDescription>
                     </div>
                      {statusInfo && (
-                      <Badge variant={order.status === 'completed' ? 'default' : isCancelled ? 'destructive' : 'secondary'} className='capitalize'>
+                      <Badge variant={resolvedStatus === 'completed' ? 'default' : isCancelled ? 'destructive' : 'secondary'} className='capitalize'>
                           {statusInfo.label}
                       </Badge>
                     )}
@@ -173,7 +203,7 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                     </div>
                 </div>
                 
-                {order.status && (
+                {rawStatus && (
                   <div className='pt-4 border-t'>
                       {isCancelled ? (
                          <Alert variant="destructive" className="mt-4">
@@ -186,11 +216,11 @@ const OrderHistory = ({ user, setActiveTab }: OrderHistoryProps) => {
                       ) : (
                         <>
                             <h4 className='font-semibold mb-4 text-center'>Order Status</h4>
-                            <div className="flex justify-between items-start w-full">
-                                {statuses.map((status, index) => (
-                                    <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} isCancelled={false} />
-                                ))}
-                            </div>
+              <div className="flex justify-between items-start w-full">
+                {statuses.map((status, index) => (
+                  <TimelineStep key={status} status={status} isCurrent={index === currentStatusIndex} isCompleted={index < currentStatusIndex} isFirst={index === 0} isCancelled={isCancelled} />
+                ))}
+              </div>
                             {statusInfo && <p className='text-xs text-muted-foreground mt-4 text-center'>{statusInfo.description}</p>}
                         </>
                       )}
